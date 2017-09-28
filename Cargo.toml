@@ -5,3 +5,4 @@ authors = ["Arthur Goldman <arthur@goldman-tribe.org>"]
 
 [dependencies]
 bitflags = "1.0.0"
+byteorder = "1.1.0"

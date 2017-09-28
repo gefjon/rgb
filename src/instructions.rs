@@ -1,36 +1,6 @@
-#![allow(non_snake_case)]
-enum r8 { // 8-bit registers
-    A, // the Accumulator
-    F, // Flags
-    B, // General-purpose registers
-    C,
-    D,
-    E,
-    H,
-    L,
-}
-
-#![allow(non_snake_case)]
-enum r16 { // 16-bit registers
-    AF, // General-purpose registers
-    BC,
-    DE,
-    HL,
-    SP, // the Stack Pointer
-    PC, // the Program Counter
-}
-
-#![allow(non_snake_case)]
-enum Flags {
-    // src: http://marc.rawer.de/Gameboy/Docs/GBCPUman.pdf
-    Z = 0x7, // set when a math operation results in 0 or by the CP instruction
-    N = 0x6, // set if the last math instruction was subtraction
-    H = 0x5, // set if a carry occurred from the lower nibble in the last math operation
-    C = 0x4, // set if a carry occurred from the last math operation or if A is the smaller value when using the CP instruction
-}
-
-#![allow(non_snake_case)]
-enum RawOpcode {
+#[allow(warnings)]
+#[derive(Debug, Copy, Clone)]
+pub enum RawOpcode {
     // src: http://pastraiser.com/cpu/gameboy/gameboy_opcodes.html
     //                             len cycles| z n h c | description
     NOP = 0x00, //                  1     4  | - - - - | No-op
@@ -159,7 +129,7 @@ enum RawOpcode {
     LD_ptrHL_H = 0x74, //           1     8  | - - - - | Load the value from H into the location pointed to by HL
     LD_ptrHL_L = 0x75, //           1     8  | - - - - | Load the value from L into the location pointed to by HL
     HALT = 0x76, //                 1     4  | - - - - | Enter CPU low power mode
-    LD_A_A = 0x77, //               1     8  | - - - - | Load the value from A into the location pointed to by HL
+    LD_ptrHL_A = 0x77, //               1     8  | - - - - | Load the value from A into the location pointed to by HL
     LD_A_B = 0x78, //               1     4  | - - - - | Load the value from B into A
     LD_A_C = 0x79, //               1     4  | - - - - | Load the value from C into A
     LD_A_D = 0x7a, //               1     4  | - - - - | Load the value from D into A
@@ -176,7 +146,7 @@ enum RawOpcode {
     ADD_A_H = 0x84, //              1     4  | Z 0 H C | A += H
     ADD_A_L = 0x85, //              1     4  | Z 0 H C | A += L
     ADD_A_ptrHL = 0x86, //          1     8  | Z 0 H C | A += *HL
-    ADC_A_A = 0x87, //              1     4  | Z 0 H C | A += A
+    ADD_A_A = 0x87, //              1     4  | Z 0 H C | A += A
     ADC_A_B = 0x88, //              1     4  | Z 0 H C | A += B + Cflag
     ADC_A_C = 0x89, //              1     4  | Z 0 H C | A += C + Cflag
     ADC_A_D = 0x8a, //              1     4  | Z 0 H C | A += D + Cflag
@@ -193,7 +163,7 @@ enum RawOpcode {
     SUB_H = 0x94, //                1     4  | Z 1 H C | A -= H
     SUB_L = 0x95, //                1     4  | Z 1 H C | A -= L
     SUB_ptrHL = 0x96, //            1     8  | Z 1 H C | A -= *HL
-    SBC_A = 0x97, //                1     4  | Z 1 H C | A -= A
+    SUB_A = 0x97, //                1     4  | Z 1 H C | A -= A
     SBC_B = 0x98, //                1     4  | Z 1 H C | A -= B + Cflag
     SBC_C = 0x99, //                1     4  | Z 1 H C | A -= C + Cflag
     SBC_D = 0x9a, //                1     4  | Z 1 H C | A -= D + Cflag
