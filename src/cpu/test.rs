@@ -63,4 +63,6 @@ fn process_basic_instruction() {
     let mut cpu = Cpu::new(super::CpuMode::DMG);
     cpu.process_instruction(::instructions::RawOpcode::INC_BC);
     assert_eq!(cpu.gp_registers[r16::BC], d16(Wrapping(0x0013 + 1)));
+    assert_eq!(cpu.gp_registers[r8::C], d8(Wrapping(0x13 + 1)));
+    assert_eq!(cpu.gp_registers[r8::B], d8(Wrapping(0x00)));
 }

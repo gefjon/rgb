@@ -3,7 +3,6 @@
 use number_types::d8_type::d8;
 use number_types::d16_type::d16;
 use super::CpuMode;
-use std::convert::{AsMut, AsRef, From, Into};
 use std::num::Wrapping;
 use std::ops::{Index, IndexMut};
 
@@ -48,21 +47,38 @@ impl IndexMut<r16> for Registers {
     }
 }
 
-#[allow(warnings)]
-#[derive(Debug, Copy, Clone)]
-pub enum r8 { // 8-bit registers
-    A, // the Accumulator
-    F, // Flags
-    B, // General-purpose registers
-    C,
-    D,
-    E,
-    H,
-    L,
+impl Index<r8> for Registers {
+    type Output = d8;
+
+    fn index(&self, index: r8) -> &<Self as Index<r8>>::Output {
+        debug_assert_ne!(index, r8::F); // F is not a valid single register
+        
+        let reg_8s: &[d8; 8] = unsafe {
+            ::std::mem::transmute(&self.registers)
+        };
+        &reg_8s[index as usize]
+    }
 }
 
 #[allow(warnings)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub enum r8 { // 8-bit registers
+    // note the ordering of these: the register that is written first
+    // in the pair is the more significant byte, but the GB
+    // (and modern PCs, more importantly) are little-endian
+    // so the more-significant bytes come later
+    F, // Flags
+    A, // the Accumulator
+    C, // General-purpose registers
+    B,
+    E,
+    D,
+    L,
+    H,
+}
+
+#[allow(warnings)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum r16 { // 16-bit registers
     AF, // General-purpose registers
     BC,
@@ -73,11 +89,25 @@ pub enum r16 { // 16-bit registers
 }
 
 #[allow(warnings)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum Flags {
     // src: http://marc.rawer.de/Gameboy/Docs/GBCPUman.pdf
     Z = 0x7, // set when a math operation results in 0 or by the CP instruction
     N = 0x6, // set if the last math instruction was subtraction
     H = 0x5, // set if a carry occurred from the lower nibble in the last math operation
     C = 0x4, // set if a carry occurred from the last math operation or if A is the smaller value when using the CP instruction
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    #[test]
+    fn index_with_r8() {
+        let registers = Registers::new(super::CpuMode::DMG);
+        assert_eq!(
+            registers[r8::A],
+            d8(Wrapping(0x01)),
+            "failed to index r8::A"
+        );
+    }
 }
