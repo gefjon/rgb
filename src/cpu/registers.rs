@@ -42,6 +42,12 @@ impl Index<r16> for Registers {
     }
 }
 
+impl IndexMut<r16> for Registers {
+    fn index_mut(&mut self, index: r16) -> &mut <Self as Index<r16>>::Output {
+        &mut self.registers[index as usize]
+    }
+}
+
 #[allow(warnings)]
 #[derive(Debug, Copy, Clone)]
 pub enum r8 { // 8-bit registers

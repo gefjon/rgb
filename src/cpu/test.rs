@@ -8,6 +8,7 @@ fn make_a_cpu() {
         gp_registers: Registers { registers: [d16(Wrapping(0)); 4] },
         stack_pointer: d16(Wrapping(0)),
         program_counter: d16(Wrapping(0)),
+        cycle_count: 0,
     };
 }
 
@@ -17,6 +18,7 @@ fn index_an_r16() {
         gp_registers: Registers { registers: [d16(Wrapping(0)); 4] },
         stack_pointer: d16(Wrapping(0)),
         program_counter: d16(Wrapping(0)),
+        cycle_count: 0,
     };
 
     assert_eq!(cpu.gp_registers[r16::AF], d16(Wrapping(0)));
@@ -53,4 +55,12 @@ fn initial_register_values_cgb() {
     assert_eq!(cpu.gp_registers[r16::HL], d16(Wrapping(0x007c)));
     assert_eq!(cpu.stack_pointer, d16(Wrapping(0xfffe)));
     assert_eq!(cpu.program_counter, d16(Wrapping(0x0100)));
+}
+
+
+#[test]
+fn process_basic_instruction() {
+    let mut cpu = Cpu::new(super::CpuMode::DMG);
+    cpu.process_instruction(::instructions::RawOpcode::INC_BC);
+    assert_eq!(cpu.gp_registers[r16::BC], d16(Wrapping(0x0013 + 1)));
 }

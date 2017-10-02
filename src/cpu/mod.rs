@@ -23,6 +23,7 @@ pub struct Cpu {
     gp_registers: Registers,
     stack_pointer: d16,
     program_counter: d16,
+    cycle_count: u64,
 }
 
 impl Cpu {
@@ -36,7 +37,28 @@ impl Cpu {
             gp_registers,
             stack_pointer,
             program_counter,
+            cycle_count: 0,
         }
+    }
+
+    pub fn process_instruction(&mut self, ins: ::instructions::RawOpcode) {
+        use instructions::RawOpcode::*;
+        match ins {
+            NOP => self.nop(),
+            LD_BC_d16 => panic!("Unimplemented instruction"),
+            LD_BC_A => panic!("Unimplemented instruction"),
+            INC_BC => self.inc_r16(r16::BC),
+            _ => panic!("Unimplemented instruction"),
+        }
+    }
+
+    fn inc_r16(&mut self, reg: r16) {
+        self.gp_registers[reg].0 += Wrapping(1);
+        self.cycle_count += 4;
+    }
+
+    fn nop(&mut self) {
+        self.cycle_count += 4;
     }
 }
 /*
