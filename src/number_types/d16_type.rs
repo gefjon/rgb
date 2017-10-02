@@ -47,7 +47,18 @@ impl ::std::cmp::PartialOrd for d16 {
     }
 }
 
-impl ::std::convert::Ord for d16 {}
+impl ::std::cmp::Ord for d16 {
+    fn cmp(&self, &d16(other): &Self) -> ::std::cmp::Ordering {
+        let d16(me) = *self;
+        if me < other {
+            ::std::cmp::Ordering::Less
+        } else if me > other {
+            ::std::cmp::Ordering::Greater
+        } else {
+            ::std::cmp::Ordering::Equal
+        }
+    }
+}
 
 impl ::std::convert::AsRef<[d8; 2]> for d16 {
     fn as_ref(&self) -> &[d8; 2] {

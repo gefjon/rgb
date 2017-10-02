@@ -47,7 +47,18 @@ impl ::std::cmp::PartialOrd for d8 {
     }
 }
 
-impl ::std::convert::Ord for d16 {}
+impl ::std::cmp::Ord for d8 {
+    fn cmp(&self, &d8(other): &Self) -> ::std::cmp::Ordering {
+        let d8(me) = *self;
+        if me < other {
+            ::std::cmp::Ordering::Less
+        } else if me > other {
+            ::std::cmp::Ordering::Greater
+        } else {
+            ::std::cmp::Ordering::Equal
+        }
+    }
+}
 
 impl ::std::ops::Add for d8 {
     type Output = Self;
@@ -58,7 +69,7 @@ impl ::std::ops::Add for d8 {
 }
 
 impl ::std::ops::AddAssign for d8 {
-    fn add_assign(&mut self, d16(other): Self) {
+    fn add_assign(&mut self, d8(other): Self) {
         self.0 = self.0 + other;
     }
 }
