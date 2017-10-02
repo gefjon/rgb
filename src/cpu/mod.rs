@@ -43,6 +43,7 @@ impl Cpu {
 
     pub fn process_instruction(&mut self, ins: ::instructions::RawOpcode) {
         use instructions::RawOpcode::*;
+        self.program_counter += d16(Wrapping(1)); // inc the program counter before doing work so that loading subsequent bytes will work
         match ins {
             NOP => self.nop(),
             LD_BC_d16 => panic!("Unimplemented instruction"),
