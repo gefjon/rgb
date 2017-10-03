@@ -84,3 +84,16 @@ impl ::std::ops::AddAssign for d16 {
     }
 }
 
+impl ::std::ops::Sub for d16 {
+    type Output = Self;
+    fn sub(self, d16(other): Self) -> <Self as ::std::ops::Sub<Self>>::Output {
+        let d16(me) = self;
+        d16(me - other)
+    }
+}
+
+impl ::std::ops::SubAssign for d16 {
+    fn sub_assign(&mut self, d16(other): Self) {
+        self.0 = self.0 - other;
+    }
+}

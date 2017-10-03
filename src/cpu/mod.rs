@@ -11,6 +11,7 @@ use self::registers::*;
 use number_types::d8_type::d8;
 use number_types::d16_type::d16;
 
+const UPPER_NIBBLE_MASK: d8 = d8(Wrapping(0b11110000));
 
 #[derive(Debug, Copy, Clone)]
 pub enum CpuMode {
@@ -46,19 +47,28 @@ impl Cpu {
         self.program_counter += d16(Wrapping(1)); // inc the program counter before doing work so that loading subsequent bytes will work
         match ins {
             NOP => self.nop(),
-            LD_BC_d16 => panic!("Unimplemented instruction"),
+            LD_BC_d16 => unimplemented!(),
             LD_BC_A => self.ld_r16_r8(r16::BC, r8::A),
             INC_BC => self.inc_r16(r16::BC),
             INC_B => self.inc_r8(r8::B),
             DEC_B => self.dec_r8(r8::B),
-            LD_B_d8 => panic!("Unimplemented instruction"),
+            LD_B_d8 => unimplemented!(),
             RLCA => self.rotate_left_carry(r8::A),
-            _ => panic!("Unimplemented instruction"),
+            LD_a16_SP => unimplemented!(),
+            ADD_HL_BC => self.add_r16_r16(r16::HL, r16::BC),
+            LD_A_ptrBC => unimplemented!(),
+            DEC_BC => self.dec_r16(r16::BC),
+            _ => unimplemented!(),
         }
     }
 
     fn inc_r16(&mut self, reg: r16) {
         self.gp_registers[reg] += d16(Wrapping(1));
+        self.cycle_count += 8;
+    }
+
+    fn dec_r16(&mut self, reg: r16) {
+        self.gp_registers[reg] -= d16(Wrapping(1));
         self.cycle_count += 8;
     }
 
@@ -68,8 +78,29 @@ impl Cpu {
     }
 
     fn dec_r8(&mut self, reg: r8) {
+        let old_value: d8 = self.gp_registers[reg];
         self.gp_registers[reg] -= d8(Wrapping(1));
+        let new_value: d8 = self.gp_registers[reg];
+        self.gp_registers.set_flag(
+            Flags::Z,
+            new_value == d8(Wrapping(0))
+        );
+        self.gp_registers.set_flag(Flags::N, true);
+        self.gp_registers.set_flag(
+            Flags::H,
+            (new_value & UPPER_NIBBLE_MASK) == (old_value & UPPER_NIBBLE_MASK)
+                // the half-carry flag is set if the top nibbles of the new and old values do not match
+        );
+        self.gp_registers.set_flag(
+            Flags::C,
+            new_value == d8(Wrapping(0xff)) // if we underflowed, the new value will be all ones
+        );
         self.cycle_count += 4;
+    }
+
+    fn add_r16_r16(&mut self, target: r16, source: r16) {
+        self.gp_registers[target] += self.gp_registers[source];
+        self.cycle_count += 8;
     }
 
     fn ld_r16_r8(&mut self, target: r16, source: r8) {

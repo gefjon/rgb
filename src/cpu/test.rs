@@ -79,8 +79,25 @@ fn inc_r8s() {
 }
 
 #[test]
+fn flags_from_dec_r8() {
+    let mut cpu = Cpu::new(super::CpuMode::DMG);
+    cpu.process_instruction(::instructions::RawOpcode::DEC_B);
+    assert_eq!(*cpu.gp_registers.flags_register(), d8(Wrapping(0b01110000)));
+}
+
+#[test]
 fn mov_between_register_instructions() {
     let mut cpu = Cpu::new(super::CpuMode::DMG);
     cpu.process_instruction(::instructions::RawOpcode::LD_BC_A);
     assert_eq!(cpu.gp_registers[r16::BC], d16(Wrapping(0x0001)));
+}
+
+#[test]
+fn addition_instructions() {
+    let mut cpu = Cpu::new(super::CpuMode::DMG);
+    cpu.process_instruction(::instructions::RawOpcode::ADD_HL_BC);
+    assert_eq!(
+        cpu.gp_registers[r16::HL],
+        d16(Wrapping(0x014du16) + Wrapping(0x0013u16))
+    );
 }

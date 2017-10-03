@@ -39,7 +39,7 @@ impl Registers {
         &mut reg_8s[r8::F as usize]
     }
 
-    fn flags_register(&self) -> &d8 {
+    pub fn flags_register(&self) -> &d8 {
         let reg_8s: &[d8; 8] = unsafe {
             ::std::mem::transmute(&self.registers)
         };
@@ -155,6 +155,13 @@ mod test {
         assert!(!(registers.get_flag(Flags::N)));
         assert!(registers.get_flag(Flags::H));
         assert!(registers.get_flag(Flags::C));
+    }
+
+    #[test]
+    fn flags_in_right_places() {
+        let mut registers = Registers::new(super::CpuMode::DMG);
+        registers.set_flag(Flags::N, true);
+        assert_eq!(*registers.flags_register(), d8(Wrapping(0b11110000)));
     }
 
     #[test]

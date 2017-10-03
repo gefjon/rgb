@@ -13,7 +13,7 @@ pub enum RawOpcode {
     RLCA = 0x07, //                 1     4  | 0 0 0 C | Rotate register A left by 1 bit, treating the C flag as the leftmost bit
     LD_a16_SP = 0x08, //            3    20  | - - - - | Store SP into addresses a16 (LSB) and a16+1 (MSB)
     ADD_HL_BC = 0x09, //            1     8  | - 0 H C | Add the value in BC to HL
-    LD_A_BC = 0x0a, //              1     8  | - - - - | Treat BC as a pointer and load the value from memory into A
+    LD_A_ptrBC = 0x0a, //           1     8  | - - - - | Treat BC as a pointer and load the value from memory into A
     DEC_BC = 0x0b, //               1     8  | - - - - | Decrement BC by 1
     INC_C = 0x0c, //                1     4  | Z 0 H - | Increment C by 1
     DEC_C = 0x0d, //                1     4  | Z 1 H - | Decrement C by 1
