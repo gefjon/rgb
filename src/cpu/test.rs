@@ -66,3 +66,21 @@ fn process_basic_instruction() {
     assert_eq!(cpu.gp_registers[r8::C], d8(Wrapping(0x13 + 1)));
     assert_eq!(cpu.gp_registers[r8::B], d8(Wrapping(0x00)));
 }
+
+#[test]
+fn inc_r8s() {
+    let mut cpu = Cpu::new(super::CpuMode::DMG);
+    cpu.process_instruction(::instructions::RawOpcode::INC_B);
+    assert_eq!(cpu.gp_registers[r8::B], d8(Wrapping(0x00 + 1)));
+    assert_eq!(cpu.gp_registers[r16::BC], d16(Wrapping(0x0013 + 0x0100)));
+    cpu.process_instruction(::instructions::RawOpcode::DEC_B);
+    assert_eq!(cpu.gp_registers[r8::B], d8(Wrapping(0x00)));
+    assert_eq!(cpu.gp_registers[r16::BC], d16(Wrapping(0x0013)));
+}
+
+#[test]
+fn mov_between_register_instructions() {
+    let mut cpu = Cpu::new(super::CpuMode::DMG);
+    cpu.process_instruction(::instructions::RawOpcode::LD_BC_A);
+    assert_eq!(cpu.gp_registers[r16::BC], d16(Wrapping(0x0001)));
+}

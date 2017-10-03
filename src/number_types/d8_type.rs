@@ -74,3 +74,23 @@ impl ::std::ops::AddAssign for d8 {
     }
 }
 
+impl ::std::ops::Sub for d8 {
+    type Output = Self;
+    fn sub(self, d8(other): Self) -> <Self as ::std::ops::Add<Self>>::Output {
+        let d8(me) = self;
+        d8(me - other)
+    }
+}
+
+impl ::std::ops::SubAssign for d8 {
+    fn sub_assign(&mut self, d8(other): Self) {
+        self.0 = self.0 - other;
+    }
+}
+
+impl ::std::convert::Into<d16> for d8 {
+    fn into(self) -> d16 {
+        let d8(Wrapping(me)) = self;
+        d16(Wrapping(me as u16))
+    }
+}

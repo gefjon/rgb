@@ -47,15 +47,32 @@ impl Cpu {
         match ins {
             NOP => self.nop(),
             LD_BC_d16 => panic!("Unimplemented instruction"),
-            LD_BC_A => panic!("Unimplemented instruction"),
+            LD_BC_A => self.ld_r16_r8(r16::BC, r8::A),
             INC_BC => self.inc_r16(r16::BC),
+            INC_B => self.inc_r8(r8::B),
+            DEC_B => self.dec_r8(r8::B),
             _ => panic!("Unimplemented instruction"),
         }
     }
 
     fn inc_r16(&mut self, reg: r16) {
-        self.gp_registers[reg].0 += Wrapping(1);
+        self.gp_registers[reg] += d16(Wrapping(1));
+        self.cycle_count += 8;
+    }
+
+    fn inc_r8(&mut self, reg: r8) {
+        self.gp_registers[reg] += d8(Wrapping(1));
         self.cycle_count += 4;
+    }
+
+    fn dec_r8(&mut self, reg: r8) {
+        self.gp_registers[reg] -= d8(Wrapping(1));
+        self.cycle_count += 4;
+    }
+
+    fn ld_r16_r8(&mut self, target: r16, source: r8) {
+        self.gp_registers[target] = self.gp_registers[source].into();
+        self.cycle_count += 8;
     }
 
     fn nop(&mut self) {

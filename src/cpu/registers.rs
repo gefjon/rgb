@@ -60,6 +60,17 @@ impl Index<r8> for Registers {
     }
 }
 
+impl IndexMut<r8> for Registers {
+    fn index_mut(&mut self, index: r8) -> &mut <Self as Index<r8>>::Output {
+        debug_assert_ne!(index, r8::F);
+
+        let reg_8s: &mut [d8; 8] = unsafe {
+            ::std::mem::transmute(&mut self.registers)
+        };
+        &mut reg_8s[index as usize]
+    }
+}
+
 #[allow(warnings)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum r8 { // 8-bit registers
