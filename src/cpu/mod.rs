@@ -51,6 +51,8 @@ impl Cpu {
             INC_BC => self.inc_r16(r16::BC),
             INC_B => self.inc_r8(r8::B),
             DEC_B => self.dec_r8(r8::B),
+            LD_B_d8 => panic!("Unimplemented instruction"),
+            RLCA => self.rotate_left_carry(r8::A),
             _ => panic!("Unimplemented instruction"),
         }
     }
@@ -73,6 +75,14 @@ impl Cpu {
     fn ld_r16_r8(&mut self, target: r16, source: r8) {
         self.gp_registers[target] = self.gp_registers[source].into();
         self.cycle_count += 8;
+    }
+
+    fn rotate_left_carry(&mut self, reg: r8) {
+        let d8(Wrapping(tmp_value)) = self.gp_registers[reg];
+        let mut tmp_value: u16 = tmp_value as _;
+        tmp_value <<= 1;
+        self.gp_registers.set_flag(Flags::C, (tmp_value >> 8) == 1);
+        self.cycle_count += 4;
     }
 
     fn nop(&mut self) {

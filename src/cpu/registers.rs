@@ -31,6 +31,32 @@ impl Registers {
         };
         Registers { registers: [AF, BC, DE, HL] }
     }
+
+    fn flags_register_mut(&mut self) -> &mut d8 {
+        let reg_8s: &mut [d8; 8] = unsafe {
+            ::std::mem::transmute(&mut self.registers)
+        };
+        &mut reg_8s[r8::F as usize]
+    }
+
+    fn flags_register(&self) -> &d8 {
+        let reg_8s: &[d8; 8] = unsafe {
+            ::std::mem::transmute(&self.registers)
+        };
+        &reg_8s[r8::F as usize]
+    }
+
+    pub fn set_flag(&mut self, flag: Flags, value: bool) {
+        let mut flags: &mut d8 = self.flags_register_mut();
+        let value = Wrapping(value as u8);
+        let flag = flag as usize;
+        flags.0 = flags.0 & !(Wrapping(1u8) << flag) | (value << flag);
+    }
+
+    pub fn get_flag(&self, flag: Flags) -> bool {
+        let d8(Wrapping(val)) = *self.flags_register() & d8(Wrapping(1 << flag as usize));
+        val > 0
+    }
 }
 
 impl Index<r16> for Registers {
@@ -120,5 +146,26 @@ mod test {
             d8(Wrapping(0x01)),
             "failed to index r8::A"
         );
+    }
+
+    #[test]
+    fn index_flag() {
+        let registers = Registers::new(super::CpuMode::DMG);
+        assert!(registers.get_flag(Flags::Z));
+        assert!(!(registers.get_flag(Flags::N)));
+        assert!(registers.get_flag(Flags::H));
+        assert!(registers.get_flag(Flags::C));
+    }
+
+    #[test]
+    fn assign_flag() {
+        let mut registers = Registers::new(super::CpuMode::DMG);
+        assert!(!(registers.get_flag(Flags::N)));
+        registers.set_flag(Flags::N, true);
+        assert!(registers.get_flag(Flags::N));
+
+        assert!(registers.get_flag(Flags::C));
+        registers.set_flag(Flags::C, false);
+        assert!(!(registers.get_flag(Flags::C)));
     }
 }

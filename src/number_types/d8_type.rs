@@ -88,6 +88,20 @@ impl ::std::ops::SubAssign for d8 {
     }
 }
 
+impl ::std::ops::BitAnd for d8 {
+    type Output = d8;
+    fn bitand(self, d8(other): Self) -> <Self as ::std::ops::BitAnd>::Output {
+        let d8(me) = self;
+        d8(me & other)
+    }
+}
+
+impl ::std::ops::BitAndAssign for d8 {
+    fn bitand_assign(&mut self, d8(other): Self) {
+        self.0 &= other;
+    }
+}
+
 impl ::std::convert::Into<d16> for d8 {
     fn into(self) -> d16 {
         let d8(Wrapping(me)) = self;
