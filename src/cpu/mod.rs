@@ -81,20 +81,29 @@ impl Cpu {
         let old_value: d8 = self.gp_registers[reg];
         self.gp_registers[reg] -= d8(Wrapping(1));
         let new_value: d8 = self.gp_registers[reg];
+        
         self.gp_registers.set_flag(
             Flags::Z,
             new_value == d8(Wrapping(0))
         );
+        
         self.gp_registers.set_flag(Flags::N, true);
+        // this is a subtraction op, so N is true
+        
         self.gp_registers.set_flag(
             Flags::H,
-            (new_value & UPPER_NIBBLE_MASK) == (old_value & UPPER_NIBBLE_MASK)
-                // the half-carry flag is set if the top nibbles of the new and old values do not match
+            (new_value & UPPER_NIBBLE_MASK) != (old_value & UPPER_NIBBLE_MASK)
+            // the half-carry flag is set if the top nibbles of the new
+            //and old values do not match
         );
+        
         self.gp_registers.set_flag(
             Flags::C,
-            new_value == d8(Wrapping(0xff)) // if we underflowed, the new value will be all ones
+            new_value > old_value
+            // a carry in subtraction occurs on underflow, so the new value
+            //will be greater than the old one
         );
+        
         self.cycle_count += 4;
     }
 

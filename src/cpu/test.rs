@@ -81,6 +81,9 @@ fn inc_r8s() {
 #[test]
 fn flags_from_dec_r8() {
     let mut cpu = Cpu::new(super::CpuMode::DMG);
+    // the initial value of B in DMG mode is 0x00
+    // so after a dec, Carry, Half-carry, and Nsubtraction should be t
+    // but Zero will be f
     cpu.process_instruction(::instructions::RawOpcode::DEC_B);
     assert_eq!(*cpu.gp_registers.flags_register(), d8(Wrapping(0b01110000)));
 }
