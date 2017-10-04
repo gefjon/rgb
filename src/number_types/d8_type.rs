@@ -16,6 +16,9 @@ impl d8 {
     pub fn lower_nibble(self) -> Self {
         self & LOWER_NIBBLE_MASK
     }
+
+    pub const HIGHEST_BIT_MASK: d8 = d8(Wrapping(0b10000000));
+    pub const LOWEST_BIT_MASK: d8 = d8(Wrapping(0b00000001));
 }
 
 impl ::std::cmp::PartialEq for d8 {
@@ -26,6 +29,13 @@ impl ::std::cmp::PartialEq for d8 {
 }
 
 impl ::std::cmp::Eq for d8 {}
+
+impl ::std::cmp::PartialEq<u8> for d8 {
+    fn eq(&self, &other: &u8) -> bool {
+        let d8(Wrapping(me)) = *self;
+        me == other
+    }
+}
 
 impl ::std::cmp::PartialOrd for d8 {
     fn partial_cmp(&self, &d8(other): &Self) -> Option<::std::cmp::Ordering> {
@@ -112,6 +122,27 @@ impl ::std::ops::BitAnd for d8 {
 impl ::std::ops::BitAndAssign for d8 {
     fn bitand_assign(&mut self, d8(other): Self) {
         self.0 &= other;
+    }
+}
+
+impl ::std::ops::Shl<usize> for d8 {
+    type Output = Self;
+
+    fn shl(self, rhs: usize) -> <Self as ::std::ops::Shl<usize>>::Output {
+        let d8(me) = self;
+        d8(me << rhs)
+    }
+}
+
+impl ::std::ops::ShlAssign<usize> for d8 {
+    fn shl_assign(&mut self, rhs: usize) {
+        self.0 <<= rhs;
+    }
+}
+
+impl ::std::ops::ShrAssign<usize> for d8 {
+    fn shr_assign(&mut self, rhs: usize) {
+        self.0 >>= rhs;
     }
 }
 

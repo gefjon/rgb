@@ -85,7 +85,7 @@ fn flags_from_dec_r8() {
     // so after a dec, Carry, Half-carry, and Nsubtraction should be t
     // but Zero will be f
     cpu.process_instruction(::instructions::RawOpcode::DEC_B);
-    assert_eq!(*cpu.gp_registers.flags_register(), d8(Wrapping(0b01110000)));
+    assert_eq!(*cpu.gp_registers.flags_register(), 0b01110000);
 }
 
 #[test]
@@ -94,7 +94,19 @@ fn flags_from_inc_r8() {
     // the initial value of B in DMG mode is 0x00
     // so after an inc, all flags will be false
     cpu.process_instruction(::instructions::RawOpcode::INC_B);
-    assert_eq!(*cpu.gp_registers.flags_register(), d8(Wrapping(0b00000000)));
+    assert_eq!(*cpu.gp_registers.flags_register(), 0b00000000);
+}
+
+#[test]
+fn rotate_a_instructions() {
+    let mut cpu = Cpu::new(super::CpuMode::DMG);
+    assert_eq!(cpu.gp_registers[r8::A], d8(Wrapping(0x01)));
+    cpu.process_instruction(::instructions::RawOpcode::RLCA);
+    assert_eq!(cpu.gp_registers[r8::A], 0b00000010);
+    assert_eq!(*cpu.gp_registers.flags_register(), d8(Wrapping(0)));
+
+    cpu.process_instruction(::instructions::RawOpcode::RRCA);
+    assert_eq!(cpu.gp_registers[r8::A], 0b00000001);
 }
 
 #[test]

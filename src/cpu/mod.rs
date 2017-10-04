@@ -11,8 +11,6 @@ use self::registers::*;
 use number_types::d8_type::d8;
 use number_types::d16_type::d16;
 
-const HIGHEST_BIT_MASK: d16 = d16(Wrapping(0b1000000000000000));
-
 #[derive(Debug, Copy, Clone)]
 pub enum CpuMode {
     DMG,
@@ -58,11 +56,19 @@ impl Cpu {
             ADD_HL_BC => self.add_r16_r16(r16::HL, r16::BC),
             LD_A_ptrBC => unimplemented!(),
             DEC_BC => self.dec_r16(r16::BC),
+            INC_C => self.inc_r8(r8::C),
+            DEC_C => self.dec_r8(r8::C),
+            LD_C_d8 => unimplemented!(),
+            RRCA => self.rotate_right_carry(r8::A),
             _ => unimplemented!(),
         }
     }
 
     fn cycle(&mut self, count: u64) {
+        debug_assert_eq!(count % 4, 0);
+        // The GameBoy processor ops all take an amount of time that is a multiple of 4
+        // Some sources use the cycle count / 4 instead, so if you see a resource that
+        // says some methods have a time of 1 or 2, that's why
         self.cycle_count += count;
     }
 
@@ -74,12 +80,14 @@ impl Cpu {
     }
 
     fn dec_r16(&mut self, reg: r16) {
+        // for some reason, the inc/dec r16 instructions don't affect any flags
+        // it's weird, but I'm not complaining
         self.gp_registers[reg] -= d16(Wrapping(1));
         self.cycle(8);
     }
 
     fn inc_r8(&mut self, reg: r8) {
-        let old_value: d8 = self.gp_registers[reg];
+        let old_value: d8 = self.gp_registers[reg]; // We store this so we can compare it for flags
         self.gp_registers[reg] += d8(Wrapping(1));
         let new_value: d8 = self.gp_registers[reg];
 
@@ -150,11 +158,13 @@ impl Cpu {
         self.gp_registers.set_flag(
             Flags::H,
             new_value.lsb().upper_nibble() != old_value.lsb().upper_nibble()
+            // I'm not actually sure if this is correct, but I'm assuming that the half-carry
+            // on 16-bit ops cares about the LSB
         );
 
         self.gp_registers.set_flag(
             Flags::C,
-            HIGHEST_BIT_MASK & new_value & old_value != d16(Wrapping(0))
+            d16::HIGHEST_BIT_MASK & new_value & old_value != d16(Wrapping(0))
             // addition will overflow iff the most significant bit
             // of each operand is 1
         );
@@ -168,10 +178,28 @@ impl Cpu {
     }
 
     fn rotate_left_carry(&mut self, reg: r8) {
-        let d8(Wrapping(tmp_value)) = self.gp_registers[reg];
-        let mut tmp_value: u16 = tmp_value as _;
-        tmp_value <<= 1;
-        self.gp_registers.set_flag(Flags::C, (tmp_value >> 8) == 1);
+        // it seems kinda weird that rotations set the zero flag to f,
+        // no matter the result of the rotation
+        let mut flags: [Option<bool>; 4] = [Some(false); 4];
+        flags[3] = Some((self.gp_registers[reg] & d8::HIGHEST_BIT_MASK) != 0);
+        // carry occurs iff the most significant bit is a 1
+
+        self.gp_registers[reg] <<= 1;
+        
+        self.gp_registers.set_maybe_flags(flags);
+        
+        self.cycle(4);
+    }
+
+    fn rotate_right_carry(&mut self, reg: r8) {
+        let mut flags: [Option<bool>; 4] = [Some(false); 4];
+        flags[3] = Some((self.gp_registers[reg] & d8::LOWEST_BIT_MASK) != 0);
+        // carry occurs iff the least significant bit is a 1
+
+        self.gp_registers[reg] >>= 1;
+
+        self.gp_registers.set_maybe_flags(flags);
+
         self.cycle(4);
     }
 

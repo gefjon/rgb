@@ -53,6 +53,23 @@ impl Registers {
         flags.0 = flags.0 & !(Wrapping(1u8) << flag) | (value << flag);
     }
 
+    pub fn set_maybe_flags(&mut self, flags: [Option<bool>; 4]) {
+        // this method takes the flags in most significant to least significant
+        // order, meaning: [Z, N, H, C]
+        if let Some(val) = flags[0] {
+            self.set_flag(Flags::Z, val);
+        }
+        if let Some(val) = flags[1] {
+            self.set_flag(Flags::N, val);
+        }
+        if let Some(val) = flags[2] {
+            self.set_flag(Flags::H, val);
+        }
+        if let Some(val) = flags[3] {
+            self.set_flag(Flags::C, val);
+        }
+    }
+
     pub fn get_flag(&self, flag: Flags) -> bool {
         let d8(Wrapping(val)) = *self.flags_register() & d8(Wrapping(1 << flag as usize));
         val > 0
