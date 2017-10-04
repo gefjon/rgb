@@ -30,7 +30,7 @@ pub enum RawOpcode {
     RLA = 0x17, //                  1     4  | 0 0 0 C | Rotate A left by 1 bit, moving the C flag into the rightmost bit and the leftmost into the C flag
     JR_d8 = 0x18, //                2     8  | - - - - | With the next byte as a signed int, add it to the current address and jump to it
     ADD_HL_DE = 0x19, //            1     8  | - 0 H C | Add the value in DE to HL
-    LD_A_DE = 0x1a, //              1     8  | - - - - | Treat the value in DE as a pointer and load the value from memory into A
+    LD_A_ptrDE = 0x1a, //           1     8  | - - - - | Treat the value in DE as a pointer and load the value from memory into A
     DEC_DE = 0x1b, //               1     8  | - - - - | Decrement DE by 1
     INC_E = 0x1c, //                1     4  | Z 0 H - | Increment E by 1
     DEC_E = 0x1d, //                1     4  | Z 1 H - | Decrement E by 1
@@ -39,7 +39,7 @@ pub enum RawOpcode {
 
     JR_NZ_r8 = 0x20, //             2  12/8  | - - - - | Jump relative (see 0x18 JR_d8) if the Z flag is not set
     LD_HL_d16 = 0x21, //            3    12  | - - - - | Load the next two bytes into HL
-    LD_HLp_A = 0x22, //             1     8  | - - - - | Store value in register A into byte pointed by HL and post-increment HL
+    LD_ptrHLp_A = 0x22, //          1     8  | - - - - | Store value in register A into byte pointed by HL and post-increment HL
     INC_HL = 0x23, //               1     4  | - - - - | Increment DE by 1
     INC_H = 0x24, //                1     4  | Z 0 H - | Increment H by 1
     DEC_H = 0x25, //                1     4  | Z 1 H - | Decrement H by 1
@@ -47,7 +47,7 @@ pub enum RawOpcode {
     DAA = 0x27, //                  1     4  | Z - 0 C | Decimal adjust register A to get a correct BCD representation after an arithmetic instruction
     JR_Z_d8 = 0x28, //              2  12/8  | - - - - | Jump relative (see 0x18 JR_d8) if the Z flag is set
     ADD_HL_HL = 0x29, //            1     8  | - 0 H C | Add the value in HL to itself
-    LD_A_HLp = 0x2a, //             1     8  | - - - - | Load value into register A from byte pointed by HL and post-increment HL
+    LD_A_ptrHLm = 0x2a, //          1     8  | - - - - | Load value into register A from byte pointed by HL and post-increment HL
     DEC_HL = 0x2b, //               1     8  | - - - - | Decrement HL by 1
     INC_L = 0x2c, //                1     4  | Z 0 H - | Increment L by 1
     DEC_L = 0x2d, //                1     4  | Z 1 H - | Decrement L by 1

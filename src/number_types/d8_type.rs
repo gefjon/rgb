@@ -97,6 +97,20 @@ impl ::std::ops::AddAssign for d8 {
     }
 }
 
+impl ::std::ops::Add<u8> for d8 {
+    type Output = Self;
+    fn add(self, other: u8) -> <Self as ::std::ops::Add<u8>>::Output {
+        let d8(me) = self;
+        d8(me + Wrapping(other))
+    }
+}
+
+impl ::std::ops::AddAssign<u8> for d8 {
+    fn add_assign(&mut self, other: u8) {
+        self.0 = self.0 + Wrapping(other);
+    }
+}
+
 impl ::std::ops::Sub for d8 {
     type Output = Self;
     fn sub(self, d8(other): Self) -> <Self as ::std::ops::Add<Self>>::Output {
@@ -143,6 +157,15 @@ impl ::std::ops::ShlAssign<usize> for d8 {
 impl ::std::ops::ShrAssign<usize> for d8 {
     fn shr_assign(&mut self, rhs: usize) {
         self.0 >>= rhs;
+    }
+}
+
+impl ::std::ops::Not for d8 {
+    type Output = Self;
+
+    fn not(self) -> <Self as ::std::ops::Not>::Output {
+        let d8(me) = self;
+        d8(!me)
     }
 }
 

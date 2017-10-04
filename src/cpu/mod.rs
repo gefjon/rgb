@@ -52,6 +52,7 @@ impl Cpu {
             DEC_B => self.dec_r8(r8::B),
             LD_B_d8 => unimplemented!(),
             RLCA => self.rotate_left_carry(r8::A),
+            
             LD_a16_SP => unimplemented!(),
             ADD_HL_BC => self.add_r16_r16(r16::HL, r16::BC),
             LD_A_ptrBC => unimplemented!(),
@@ -60,6 +61,45 @@ impl Cpu {
             DEC_C => self.dec_r8(r8::C),
             LD_C_d8 => unimplemented!(),
             RRCA => self.rotate_right_carry(r8::A),
+
+            
+            STOP_0 => unimplemented!(),
+            LD_DE_d16 => unimplemented!(),
+            LD_DE_A => self.ld_r16_r8(r16::DE, r8::A),
+            INC_DE => self.inc_r16(r16::BC),
+            INC_D => self.inc_r8(r8::D),
+            DEC_D => self.dec_r8(r8::D),
+            LD_D_d8 => unimplemented!(),
+            RLA => self.rotate_left(r8::A),
+            
+            JR_d8 => unimplemented!(),
+            ADD_HL_DE => self.add_r16_r16(r16::HL, r16::BC),
+            LD_A_ptrDE => unimplemented!(),
+            DEC_DE => self.dec_r16(r16::DE),
+            INC_E => self.inc_r8(r8::E),
+            DEC_E => self.dec_r8(r8::E),
+            LD_E_d8 => unimplemented!(),
+            RRA => self.rotate_right(r8::A),
+
+
+            JR_NZ_r8 => unimplemented!(),
+            LD_HL_d16 => unimplemented!(),
+            LD_ptrHL_A => unimplemented!(),
+            INC_HL => self.inc_r16(r16::HL),
+            INC_H => self.inc_r8(r8::H),
+            DEC_H => self.dec_r8(r8::H),
+            LD_H_d8 => unimplemented!(),
+            DAA => unimplemented!(),
+
+            JR_Z_d8 => unimplemented!(),
+            ADD_HL_HL => self.add_r16_r16(r16::HL, r16::HL),
+            LD_A_ptrHL => unimplemented!(),
+            DEC_HL => self.dec_r16(r16::HL),
+            INC_L => self.inc_r8(r8::L),
+            DEC_L => self.dec_r8(r8::L),
+            CPL => self.compliment_r8(r8::A),
+
+            
             _ => unimplemented!(),
         }
     }
@@ -93,7 +133,7 @@ impl Cpu {
 
         self.gp_registers.set_flag(
             Flags::Z,
-            new_value == d8(Wrapping(0))
+            new_value == 0
         );
 
         self.gp_registers.set_flag(Flags::N, false);
@@ -111,7 +151,7 @@ impl Cpu {
             // a carry in addition occurs on overflow, so the new value
             // will be less than the old one
         );
-            
+        
         self.cycle(4);
     }
 
@@ -122,26 +162,26 @@ impl Cpu {
         
         self.gp_registers.set_flag(
             Flags::Z,
-            new_value == d8(Wrapping(0))
+            new_value == 0
         );
-        
+
         self.gp_registers.set_flag(Flags::N, true);
         // this is a subtraction op, so N is true
-        
+
         self.gp_registers.set_flag(
             Flags::H,
             new_value.upper_nibble() != old_value.upper_nibble()
             // the half-carry flag is set if the top nibbles of the new
             //and old values do not match
         );
-        
+
         self.gp_registers.set_flag(
             Flags::C,
             new_value > old_value
             // a carry in subtraction occurs on underflow, so the new value
             //will be greater than the old one
         );
-        
+
         self.cycle(4);
     }
 
@@ -164,7 +204,7 @@ impl Cpu {
 
         self.gp_registers.set_flag(
             Flags::C,
-            d16::HIGHEST_BIT_MASK & new_value & old_value != d16(Wrapping(0))
+            d16::HIGHEST_BIT_MASK & new_value & old_value != 0
             // addition will overflow iff the most significant bit
             // of each operand is 1
         );
@@ -203,22 +243,38 @@ impl Cpu {
         self.cycle(4);
     }
 
+    fn rotate_left(&mut self, reg: r8) {
+        let mut flags: [Option<bool>; 4] = [Some(false); 4];
+        flags[3] = Some((self.gp_registers[reg] & d8::HIGHEST_BIT_MASK) != 0);
+        self.gp_registers[reg] <<= 1;
+        self.gp_registers[reg] += self.gp_registers.get_flag(Flags::C) as u8;
+
+        self.gp_registers.set_maybe_flags(flags);
+        
+        self.cycle(4);
+    }
+
+    fn rotate_right(&mut self, reg: r8) {
+        let mut flags: [Option<bool>; 4] = [Some(false); 4];
+        flags[3] = Some((self.gp_registers[reg] & d8::LOWEST_BIT_MASK) != 0);
+        self.gp_registers[reg] >>= 1;
+        self.gp_registers[reg] += (self.gp_registers.get_flag(Flags::C) as u8) << 7;
+
+        self.gp_registers.set_maybe_flags(flags);
+
+        self.cycle(4);
+    }
+
+    fn compliment_r8(&mut self, reg: r8) {
+        let mut flags: [Option<bool>; 4] = [None, Some(true), Some(true), None];
+        self.gp_registers[reg] = !(self.gp_registers[reg]);
+
+        self.gp_registers.set_maybe_flags(flags);
+
+        self.cycle(4);
+    }
+
     fn nop(&mut self) {
         self.cycle(4);
     }
 }
-/*
-impl ::std::ops::Index<r8> for Cpu {
-    type Output = d8;
-
-    fn index(&self, register: r8) -> &Self::Output {
-        &self.gp_registers.0[register as usize]
-    }
-}
-
-impl ::std::ops::IndexMut<r8> for Cpu {
-    fn index_mut(&mut self, register: r8) -> &mut <Self as ::std::ops::Index<r8>>::Output {
-        &mut self.gp_registers.0[register as usize]
-    }
-}
-*/

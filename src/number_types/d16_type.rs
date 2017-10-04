@@ -27,6 +27,13 @@ impl ::std::cmp::PartialEq for d16 {
 
 impl ::std::cmp::Eq for d16 {}
 
+impl ::std::cmp::PartialEq<u16> for d16 {
+    fn eq(&self, &other: &u16) -> bool {
+        let d16(Wrapping(me)) = *self;
+        me == other
+    }
+}
+
 impl ::std::cmp::PartialOrd for d16 {
     fn partial_cmp(&self, &d16(other): &Self) -> Option<::std::cmp::Ordering> {
         let d16(me) = *self;
@@ -94,6 +101,20 @@ impl ::std::ops::Add for d16 {
 impl ::std::ops::AddAssign for d16 {
     fn add_assign(&mut self, d16(other): Self) {
         self.0 = self.0 + other;
+    }
+}
+
+impl ::std::ops::Add<u16> for d16 {
+    type Output = Self;
+    fn add(self, other: u16) -> <Self as ::std::ops::Add<u16>>::Output {
+        let d16(me) = self;
+        d16(me + Wrapping(other))
+    }
+}
+
+impl ::std::ops::AddAssign<u16> for d16 {
+    fn add_assign(&mut self, other: u16) {
+        self.0 = self.0 + Wrapping(other);
     }
 }
 
