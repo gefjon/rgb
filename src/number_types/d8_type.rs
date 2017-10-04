@@ -5,6 +5,19 @@ use number_types::d16_type::d16;
 #[derive(Copy, Clone, Debug)]
 pub struct d8(pub Wrapping<u8>);
 
+const UPPER_NIBBLE_MASK: d8 = d8(Wrapping(0b11110000));
+const LOWER_NIBBLE_MASK: d8 = d8(Wrapping(0b00001111));
+
+impl d8 {
+    pub fn upper_nibble(self) -> Self {
+        self & UPPER_NIBBLE_MASK
+    }
+
+    pub fn lower_nibble(self) -> Self {
+        self & LOWER_NIBBLE_MASK
+    }
+}
+
 impl ::std::cmp::PartialEq for d8 {
     fn eq(&self, &d8(other): &Self) -> bool {
         let d8(me) = *self;

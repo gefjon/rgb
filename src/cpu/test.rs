@@ -89,6 +89,15 @@ fn flags_from_dec_r8() {
 }
 
 #[test]
+fn flags_from_inc_r8() {
+    let mut cpu = Cpu::new(super::CpuMode::DMG);
+    // the initial value of B in DMG mode is 0x00
+    // so after an inc, all flags will be false
+    cpu.process_instruction(::instructions::RawOpcode::INC_B);
+    assert_eq!(*cpu.gp_registers.flags_register(), d8(Wrapping(0b00000000)));
+}
+
+#[test]
 fn mov_between_register_instructions() {
     let mut cpu = Cpu::new(super::CpuMode::DMG);
     cpu.process_instruction(::instructions::RawOpcode::LD_BC_A);

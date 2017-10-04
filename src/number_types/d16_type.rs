@@ -5,6 +5,16 @@ use number_types::d8_type::d8;
 #[derive(Copy, Clone, Debug)]
 pub struct d16(pub Wrapping<u16>);
 
+impl d16 {
+    pub fn lsb(self) -> d8 {
+        // remember, on little-endian systems, the lsb has index 0!
+        let array: [d8; 2] = unsafe {
+            ::std::mem::transmute::<d16, [d8; 2]>(self)
+        };
+        array[0]
+    }
+}
+
 impl ::std::cmp::PartialEq for d16 {
     fn eq(&self, &d16(other): &Self) -> bool {
         let d16(me) = *self;
@@ -95,5 +105,19 @@ impl ::std::ops::Sub for d16 {
 impl ::std::ops::SubAssign for d16 {
     fn sub_assign(&mut self, d16(other): Self) {
         self.0 = self.0 - other;
+    }
+}
+
+impl ::std::ops::BitAnd for d16 {
+    type Output = Self;
+    fn bitand(self, d16(other): Self) -> <Self as ::std::ops::BitAnd>::Output {
+        let d16(me) = self;
+        d16(me & other)
+    }
+}
+
+impl ::std::ops::BitAndAssign for d16 {
+    fn bitand_assign(&mut self, d16(other): Self) {
+        self.0 &= other;
     }
 }

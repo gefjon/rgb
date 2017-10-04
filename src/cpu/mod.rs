@@ -11,7 +11,7 @@ use self::registers::*;
 use number_types::d8_type::d8;
 use number_types::d16_type::d16;
 
-const UPPER_NIBBLE_MASK: d8 = d8(Wrapping(0b11110000));
+const HIGHEST_BIT_MASK: d16 = d16(Wrapping(0b1000000000000000));
 
 #[derive(Debug, Copy, Clone)]
 pub enum CpuMode {
@@ -62,19 +62,49 @@ impl Cpu {
         }
     }
 
+    fn cycle(&mut self, count: u64) {
+        self.cycle_count += count;
+    }
+
     fn inc_r16(&mut self, reg: r16) {
+        // for some reason, the inc/dec r16 instructions don't affect any flags
+        // it's weird, but I'm not complaining
         self.gp_registers[reg] += d16(Wrapping(1));
-        self.cycle_count += 8;
+        self.cycle(8);
     }
 
     fn dec_r16(&mut self, reg: r16) {
         self.gp_registers[reg] -= d16(Wrapping(1));
-        self.cycle_count += 8;
+        self.cycle(8);
     }
 
     fn inc_r8(&mut self, reg: r8) {
+        let old_value: d8 = self.gp_registers[reg];
         self.gp_registers[reg] += d8(Wrapping(1));
-        self.cycle_count += 4;
+        let new_value: d8 = self.gp_registers[reg];
+
+        self.gp_registers.set_flag(
+            Flags::Z,
+            new_value == d8(Wrapping(0))
+        );
+
+        self.gp_registers.set_flag(Flags::N, false);
+        // this is an addition op, so N is false
+
+        self.gp_registers.set_flag(
+            Flags::H,
+            new_value.upper_nibble() != old_value.upper_nibble()
+            // half-carry occured if top nibbles do not match
+        );
+
+        self.gp_registers.set_flag(
+            Flags::C,
+            new_value < old_value
+            // a carry in addition occurs on overflow, so the new value
+            // will be less than the old one
+        );
+            
+        self.cycle(4);
     }
 
     fn dec_r8(&mut self, reg: r8) {
@@ -92,7 +122,7 @@ impl Cpu {
         
         self.gp_registers.set_flag(
             Flags::H,
-            (new_value & UPPER_NIBBLE_MASK) != (old_value & UPPER_NIBBLE_MASK)
+            new_value.upper_nibble() != old_value.upper_nibble()
             // the half-carry flag is set if the top nibbles of the new
             //and old values do not match
         );
@@ -104,17 +134,37 @@ impl Cpu {
             //will be greater than the old one
         );
         
-        self.cycle_count += 4;
+        self.cycle(4);
     }
 
     fn add_r16_r16(&mut self, target: r16, source: r16) {
-        self.gp_registers[target] += self.gp_registers[source];
-        self.cycle_count += 8;
+        // strangely, the Z flag is unaffected by these operations
+        // but the other three are used
+        let old_value: d16 = self.gp_registers[target];
+        let to_add: d16 = self.gp_registers[source];
+        self.gp_registers[target] += to_add;
+        let new_value: d16 = self.gp_registers[target];
+
+        self.gp_registers.set_flag(Flags::N, false);
+
+        self.gp_registers.set_flag(
+            Flags::H,
+            new_value.lsb().upper_nibble() != old_value.lsb().upper_nibble()
+        );
+
+        self.gp_registers.set_flag(
+            Flags::C,
+            HIGHEST_BIT_MASK & new_value & old_value != d16(Wrapping(0))
+            // addition will overflow iff the most significant bit
+            // of each operand is 1
+        );
+
+        self.cycle(8);
     }
 
     fn ld_r16_r8(&mut self, target: r16, source: r8) {
         self.gp_registers[target] = self.gp_registers[source].into();
-        self.cycle_count += 8;
+        self.cycle(8);
     }
 
     fn rotate_left_carry(&mut self, reg: r8) {
@@ -122,11 +172,11 @@ impl Cpu {
         let mut tmp_value: u16 = tmp_value as _;
         tmp_value <<= 1;
         self.gp_registers.set_flag(Flags::C, (tmp_value >> 8) == 1);
-        self.cycle_count += 4;
+        self.cycle(4);
     }
 
     fn nop(&mut self) {
-        self.cycle_count += 4;
+        self.cycle(4);
     }
 }
 /*
