@@ -99,7 +99,26 @@ impl Cpu {
             DEC_L => self.dec_r8(r8::L),
             CPL => self.compliment_r8(r8::A),
 
-            
+
+            JR_NC_r8 => unimplemented!(),
+            LD_SP_d16 => unimplemented!(),
+            LD_HLm_A => unimplemented!(),
+            INC_SP => self.inc_sp(),
+            INC_ptrHL => unimplemented!(),
+            DEC_ptrHL => unimplemented!(),
+            LD_ptrHL_d8 => unimplemented!(),
+            SCF => self.set_carry(true),
+
+            JR_C_d8 => unimplemented!(),
+            ADD_HL_SP => self.add_sp_into(r16::HL),
+            LD_A_HLm => unimplemented!(),
+            DEC_SP => self.dec_sp(),
+            INC_A => self.inc_r8(r8::A),
+            DEC_A => self.dec_r8(r8::A),
+            LD_A_d8 => unimplemented!(),
+            CCF => { let v = !self.gp_registers.get_flag(Flags::C); self.set_carry(v); },
+            // the borrow checker won't let me write this one the way I want to;
+            // hence this ugly expression
             _ => unimplemented!(),
         }
     }
@@ -112,23 +131,38 @@ impl Cpu {
         self.cycle_count += count;
     }
 
+    fn set_carry(&mut self, value: bool) {
+        self.gp_registers.set_flag(Flags::C, value);
+        self.cycle(4);
+    }
+
+    fn inc_sp(&mut self) {
+        self.stack_pointer += 1;
+        self.cycle(8);
+    }
+
+    fn dec_sp(&mut self) {
+        self.stack_pointer -= 1;
+        self.cycle(8);
+    }
+
     fn inc_r16(&mut self, reg: r16) {
         // for some reason, the inc/dec r16 instructions don't affect any flags
         // it's weird, but I'm not complaining
-        self.gp_registers[reg] += d16(Wrapping(1));
+        self.gp_registers[reg] += 1;
         self.cycle(8);
     }
 
     fn dec_r16(&mut self, reg: r16) {
         // for some reason, the inc/dec r16 instructions don't affect any flags
         // it's weird, but I'm not complaining
-        self.gp_registers[reg] -= d16(Wrapping(1));
+        self.gp_registers[reg] -= 1;
         self.cycle(8);
     }
 
     fn inc_r8(&mut self, reg: r8) {
         let old_value: d8 = self.gp_registers[reg]; // We store this so we can compare it for flags
-        self.gp_registers[reg] += d8(Wrapping(1));
+        self.gp_registers[reg] += 1;
         let new_value: d8 = self.gp_registers[reg];
 
         self.gp_registers.set_flag(
@@ -157,7 +191,7 @@ impl Cpu {
 
     fn dec_r8(&mut self, reg: r8) {
         let old_value: d8 = self.gp_registers[reg];
-        self.gp_registers[reg] -= d8(Wrapping(1));
+        self.gp_registers[reg] -= 1;
         let new_value: d8 = self.gp_registers[reg];
         
         self.gp_registers.set_flag(
@@ -185,29 +219,43 @@ impl Cpu {
         self.cycle(4);
     }
 
+    fn add_sp_into(&mut self, target: r16) {
+        // strangely, the Z flag is unaffected by these operations
+        // but the other three are used
+        let lhs: d16 = self.gp_registers[target];
+        let rhs: d16 = self.stack_pointer;
+        self.gp_registers[target] += rhs;
+
+        let flags: [Option<bool>; 4] = [
+            None,
+            Some(false),
+            Some(self.gp_registers[target].lsb().upper_nibble() != lhs.lsb().upper_nibble()),
+            Some((d16::HIGHEST_BIT_MASK & lhs & rhs) != 0)
+        ];
+        self.gp_registers.set_maybe_flags(flags);
+        self.cycle(8);
+    }
+
     fn add_r16_r16(&mut self, target: r16, source: r16) {
         // strangely, the Z flag is unaffected by these operations
         // but the other three are used
-        let old_value: d16 = self.gp_registers[target];
-        let to_add: d16 = self.gp_registers[source];
-        self.gp_registers[target] += to_add;
-        let new_value: d16 = self.gp_registers[target];
+        let lhs: d16 = self.gp_registers[target];
+        let rhs: d16 = self.gp_registers[source];
+        self.gp_registers[target] += rhs;
+        let result: d16 = self.gp_registers[target];
 
-        self.gp_registers.set_flag(Flags::N, false);
-
-        self.gp_registers.set_flag(
-            Flags::H,
-            new_value.lsb().upper_nibble() != old_value.lsb().upper_nibble()
+        let flags: [Option<bool>; 4] = [
+            None,
+            Some(false),
+            Some(result.lsb().upper_nibble() != lhs.lsb().upper_nibble()),
             // I'm not actually sure if this is correct, but I'm assuming that the half-carry
             // on 16-bit ops cares about the LSB
-        );
-
-        self.gp_registers.set_flag(
-            Flags::C,
-            d16::HIGHEST_BIT_MASK & new_value & old_value != 0
+            Some((d16::HIGHEST_BIT_MASK & lhs & rhs) != 0)
             // addition will overflow iff the most significant bit
             // of each operand is 1
-        );
+        ];
+
+        self.gp_registers.set_maybe_flags(flags);
 
         self.cycle(8);
     }

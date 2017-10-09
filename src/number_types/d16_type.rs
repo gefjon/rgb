@@ -132,6 +132,12 @@ impl ::std::ops::SubAssign for d16 {
     }
 }
 
+impl ::std::ops::SubAssign<u16> for d16 {
+    fn sub_assign(&mut self, other: u16) {
+        self.0 = self.0 - Wrapping(other);
+    }
+}
+
 impl ::std::ops::BitAnd for d16 {
     type Output = Self;
     fn bitand(self, d16(other): Self) -> <Self as ::std::ops::BitAnd>::Output {
