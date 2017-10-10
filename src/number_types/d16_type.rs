@@ -83,10 +83,32 @@ impl ::std::cmp::Ord for d16 {
 
 impl ::std::convert::AsRef<[d8; 2]> for d16 {
     fn as_ref(&self) -> &[d8; 2] {
-        use std::mem::transmute;
-        
         unsafe {
-            transmute(&self)
+            ::std::mem::transmute(&self)
+        }
+    }
+}
+
+impl ::std::convert::AsRef<d16> for [d8; 2] {
+    fn as_ref(&self) -> &d16 {
+        unsafe {
+            ::std::mem::transmute(&self)
+        }
+    }
+}
+
+impl ::std::convert::AsMut<[d8; 2]> for d16 {
+    fn as_mut(&mut self) -> &mut [d8; 2] {
+        unsafe {
+            ::std::mem::transmute(self)
+        }
+    }
+}
+
+impl ::std::convert::AsMut<d16> for [d8; 2] {
+    fn as_mut(&mut self) -> &mut d16 {
+        unsafe {
+            ::std::mem::transmute(self)
         }
     }
 }
