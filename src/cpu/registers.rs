@@ -134,12 +134,10 @@ pub enum r8 { // 8-bit registers
 #[allow(warnings)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum r16 { // 16-bit registers
-    AF, // General-purpose registers
-    BC,
+    AF, // Acc and flags
+    BC, // General-purpose registers
     DE,
     HL,
-    SP, // the Stack Pointer
-    PC, // the Program Counter
 }
 
 #[allow(warnings)]

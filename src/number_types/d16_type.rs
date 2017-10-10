@@ -16,6 +16,7 @@ impl d16 {
 
     pub const HIGHEST_BIT_MASK: d16 = d16(Wrapping(0b1000000000000000));
     pub const LOWEST_BIT_MASK: d16 = d16(Wrapping(0b0000000000000001));
+    pub const ZERO: d16 = d16(Wrapping(0));
 }
 
 impl ::std::cmp::PartialEq for d16 {
@@ -86,6 +87,22 @@ impl ::std::convert::AsRef<[d8; 2]> for d16 {
         
         unsafe {
             transmute(&self)
+        }
+    }
+}
+
+impl ::std::convert::Into<[d8; 2]> for d16 {
+    fn into(self) -> [d8; 2] {
+        unsafe {
+            ::std::mem::transmute(self)
+        }
+    }
+}
+
+impl ::std::convert::Into<d16> for [d8; 2] {
+    fn into(self) -> d16 {
+        unsafe {
+            ::std::mem::transmute(self)
         }
     }
 }

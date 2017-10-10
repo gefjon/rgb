@@ -19,6 +19,7 @@ impl d8 {
 
     pub const HIGHEST_BIT_MASK: d8 = d8(Wrapping(0b10000000));
     pub const LOWEST_BIT_MASK: d8 = d8(Wrapping(0b00000001));
+    pub const ZERO: d8 = d8(Wrapping(0));
 }
 
 impl ::std::cmp::PartialEq for d8 {

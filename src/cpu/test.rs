@@ -1,6 +1,7 @@
 use super::{Cpu, d8, d16};
 use super::registers::*;
 use std::num::Wrapping;
+use memory::Memory;
 
 #[test]
 fn make_a_cpu() {
@@ -9,6 +10,7 @@ fn make_a_cpu() {
         stack_pointer: d16(Wrapping(0)),
         program_counter: d16(Wrapping(0)),
         cycle_count: 0,
+        memory: Memory::new_zeros(),
     };
 }
 
@@ -19,6 +21,7 @@ fn index_an_r16() {
         stack_pointer: d16(Wrapping(0)),
         program_counter: d16(Wrapping(0)),
         cycle_count: 0,
+        memory: Memory::new_zeros(),
     };
 
     assert_eq!(cpu.gp_registers[r16::AF], 0);
