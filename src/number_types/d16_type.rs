@@ -91,18 +91,18 @@ impl ::std::convert::AsRef<[d8; 2]> for d16 {
     }
 }
 
-impl ::std::convert::Into<[d8; 2]> for d16 {
-    fn into(self) -> [d8; 2] {
+impl ::std::convert::From<[d8; 2]> for d16 {
+    fn from(this: [d8; 2]) -> Self {
         unsafe {
-            ::std::mem::transmute(self)
+            ::std::mem::transmute(this)
         }
     }
 }
 
-impl ::std::convert::Into<d16> for [d8; 2] {
-    fn into(self) -> d16 {
+impl ::std::convert::From<d16> for [d8; 2] {
+    fn from(this: d16) -> Self {
         unsafe {
-            ::std::mem::transmute(self)
+            ::std::mem::transmute(this)
         }
     }
 }
