@@ -8,10 +8,25 @@ pub struct d16(pub Wrapping<u16>);
 impl d16 {
     pub fn lsb(self) -> d8 {
         // remember, on little-endian systems, the lsb has index 0!
-        let array: [d8; 2] = unsafe {
-            ::std::mem::transmute::<d16, [d8; 2]>(self)
-        };
+        let array: [d8; 2] = self.into();
         array[0]
+    }
+
+    pub fn least_significant_nibble(self) -> d8 {
+        self.lsb().lower_nibble()
+    }
+
+    pub fn check_nibble_overflow(lhs: Self, rhs: Self) -> bool {
+        let rhs: Wrapping<u8> = rhs.least_significant_nibble().into();
+        let lhs: Wrapping<u8> = lhs.least_significant_nibble().into();
+        ((rhs + lhs) > Wrapping(1 << 3))
+    }
+
+    pub fn add_and_check_overflow(lhs: Self, rhs: Self) -> (Self, bool) {
+        let rhs: Wrapping<u32> = rhs.into();
+        let lhs: Wrapping<u32> = lhs.into();
+        let result = lhs + rhs;
+        (result.into(), (result > Wrapping(::std::u16::MAX as _)))
     }
 
     pub const HIGHEST_BIT_MASK: d16 = d16(Wrapping(0b1000000000000000));
@@ -126,6 +141,20 @@ impl ::std::convert::From<d16> for [d8; 2] {
         unsafe {
             ::std::mem::transmute(this)
         }
+    }
+}
+
+impl ::std::convert::From<d16> for Wrapping<u32> {
+    fn from(this: d16) -> Self {
+        let d16(Wrapping(this)) = this;
+        Wrapping(this as _)
+    }
+}
+
+impl ::std::convert::From<Wrapping<u32>> for d16 {
+    fn from(this: Wrapping<u32>) -> Self {
+        let Wrapping(this) = this;
+        d16(Wrapping(this as _))
     }
 }
 

@@ -275,15 +275,19 @@ impl Cpu {
     fn add_sp_into(&mut self, target: r16) {
         // strangely, the Z flag is unaffected by these operations
         // but the other three are used
-        let lhs: d16 = self.gp_registers[target];
-        let rhs: d16 = self.stack_pointer;
-        self.gp_registers[target] += rhs;
+        let lhs = self.gp_registers[target];
+        let rhs = self.stack_pointer;
+
+        let nibble_overflow = d16::check_nibble_overflow(rhs, lhs);        
+        let (result, carry_flag) = d16::add_and_check_overflow(lhs, rhs);
+        
+        self.gp_registers[target] = result;
 
         let flags: [Option<bool>; 4] = [
             None,
             Some(false),
-            Some(self.gp_registers[target].lsb().upper_nibble() != lhs.lsb().upper_nibble()),
-            Some((d16::HIGHEST_BIT_MASK & lhs & rhs) != 0)
+            Some(nibble_overflow),
+            Some(carry_flag)
         ];
         self.gp_registers.set_maybe_flags(flags);
         self.cycle(8);
@@ -294,18 +298,19 @@ impl Cpu {
         // but the other three are used
         let lhs: d16 = self.gp_registers[target];
         let rhs: d16 = self.gp_registers[source];
-        self.gp_registers[target] += rhs;
-        let result: d16 = self.gp_registers[target];
+
+        let nibble_overflow = d16::check_nibble_overflow(rhs, lhs);
+        let (result, carry_flag) = d16::add_and_check_overflow(lhs, rhs);
+        
+        self.gp_registers[target] = result;
 
         let flags: [Option<bool>; 4] = [
             None,
             Some(false),
-            Some(result.lsb().upper_nibble() != lhs.lsb().upper_nibble()),
+            Some(nibble_overflow),
             // I'm not actually sure if this is correct, but I'm assuming that the half-carry
             // on 16-bit ops cares about the LSB
-            Some((d16::HIGHEST_BIT_MASK & lhs & rhs) != 0)
-            // addition will overflow iff the most significant bit
-            // of each operand is 1
+            Some(carry_flag)
         ];
 
         self.gp_registers.set_maybe_flags(flags);

@@ -17,6 +17,12 @@ impl d8 {
         self & LOWER_NIBBLE_MASK
     }
 
+    pub fn check_nibble_overflow(rhs: Self, lhs: Self) -> bool {
+        let rhs: Wrapping<u8> = rhs.into();
+        let lhs: Wrapping<u8> = lhs.into();
+        ((rhs + lhs) > Wrapping( 1 << 3))
+    }
+
     pub const HIGHEST_BIT_MASK: d8 = d8(Wrapping(0b10000000));
     pub const LOWEST_BIT_MASK: d8 = d8(Wrapping(0b00000001));
     pub const ZERO: d8 = d8(Wrapping(0));
@@ -26,6 +32,19 @@ impl ::std::cmp::PartialEq for d8 {
     fn eq(&self, &d8(other): &Self) -> bool {
         let d8(me) = *self;
         me == other
+    }
+}
+
+impl ::std::convert::From<d8> for Wrapping<u16> {
+    fn from(this: d8) -> Self {
+        let d8(Wrapping(this)) = this;
+        Wrapping(this as _)
+    }
+}
+
+impl ::std::convert::From<d8> for Wrapping<u8> {
+    fn from(this: d8) -> Self {
+        this.0
     }
 }
 
