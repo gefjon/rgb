@@ -215,59 +215,36 @@ impl Cpu {
 
     fn inc_r8(&mut self, reg: r8) {
         let old_value: d8 = self.gp_registers[reg]; // We store this so we can compare it for flags
-        self.gp_registers[reg] += 1;
-        let new_value: d8 = self.gp_registers[reg];
+        let new_value = old_value + 1;
+        self.gp_registers[reg] = new_value;
 
-        self.gp_registers.set_flag(
-            Flags::Z,
-            new_value == 0
-        );
+        let flags: [Option<bool>; 4] = [
+            Some(new_value == 0),
+            Some(false),
+            Some(new_value.upper_nibble() != old_value.upper_nibble()),
+            Some(new_value < old_value)
+        ];
 
-        self.gp_registers.set_flag(Flags::N, false);
-        // this is an addition op, so N is false
-
-        self.gp_registers.set_flag(
-            Flags::H,
-            new_value.upper_nibble() != old_value.upper_nibble()
-            // half-carry occured if top nibbles do not match
-        );
-
-        self.gp_registers.set_flag(
-            Flags::C,
-            new_value < old_value
-            // a carry in addition occurs on overflow, so the new value
-            // will be less than the old one
-        );
+        self.gp_registers.set_maybe_flags(flags);
         
         self.cycle(4);
     }
 
     fn dec_r8(&mut self, reg: r8) {
         let old_value: d8 = self.gp_registers[reg];
-        self.gp_registers[reg] -= 1;
-        let new_value: d8 = self.gp_registers[reg];
+
+        let new_value = old_value - 1;
+
+        self.gp_registers[reg] = new_value;
+
+        let flags: [Option<bool>; 4] = [
+            Some(new_value == 0),
+            Some(true),
+            Some(new_value.upper_nibble() != old_value.upper_nibble()),
+            Some(new_value > old_value)
+        ];
         
-        self.gp_registers.set_flag(
-            Flags::Z,
-            new_value == 0
-        );
-
-        self.gp_registers.set_flag(Flags::N, true);
-        // this is a subtraction op, so N is true
-
-        self.gp_registers.set_flag(
-            Flags::H,
-            new_value.upper_nibble() != old_value.upper_nibble()
-            // the half-carry flag is set if the top nibbles of the new
-            //and old values do not match
-        );
-
-        self.gp_registers.set_flag(
-            Flags::C,
-            new_value > old_value
-            // a carry in subtraction occurs on underflow, so the new value
-            //will be greater than the old one
-        );
+        self.gp_registers.set_maybe_flags(flags);
 
         self.cycle(4);
     }
@@ -372,10 +349,11 @@ impl Cpu {
     }
 
     fn compliment_r8(&mut self, reg: r8) {
-        let mut flags: [Option<bool>; 4] = [None, Some(true), Some(true), None];
-        self.gp_registers[reg] = !(self.gp_registers[reg]);
+        let flags: [Option<bool>; 4] = [None, Some(true), Some(true), None];
 
         self.gp_registers.set_maybe_flags(flags);
+
+        self.gp_registers[reg] = !(self.gp_registers[reg]);
 
         self.cycle(4);
     }

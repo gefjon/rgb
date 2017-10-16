@@ -145,6 +145,14 @@ impl ::std::ops::SubAssign for d8 {
     }
 }
 
+impl ::std::ops::Sub<u8> for d8 {
+    type Output = Self;
+    fn sub(self, other: u8) -> <Self as ::std::ops::Sub<u8>>::Output {
+        let d8(me) = self;
+        d8(me - Wrapping(other))
+    }
+}
+
 impl ::std::ops::SubAssign<u8> for d8 {
     fn sub_assign(&mut self, other: u8) {
         self.0 = self.0 - Wrapping(other);

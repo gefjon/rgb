@@ -88,6 +88,7 @@ fn flags_from_dec_r8() {
     // so after a dec, Carry, Half-carry, and Nsubtraction should be t
     // but Zero will be f
     cpu.process_instruction(::instructions::RawOpcode::DEC_B);
+    assert_eq!(cpu.gp_registers[r8::B], 0xff);
     assert_eq!(*cpu.gp_registers.flags_register(), 0b01110000);
 }
 
