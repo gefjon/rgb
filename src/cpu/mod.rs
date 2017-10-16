@@ -122,6 +122,91 @@ impl Cpu {
             CCF => { let v = !self.gp_registers.get_flag(Flags::C); self.set_carry(v); },
             // the borrow checker won't let me write this one the way I want to;
             // hence this ugly expression
+
+            LD_B_B => self.ld_r8_r8(r8::B, r8::B),
+            LD_B_C => self.ld_r8_r8(r8::B, r8::C),
+            LD_B_D => self.ld_r8_r8(r8::B, r8::D),
+            LD_B_E => self.ld_r8_r8(r8::B, r8::E),
+            LD_B_H => self.ld_r8_r8(r8::B, r8::H),
+            LD_B_L => self.ld_r8_r8(r8::B, r8::L),
+            LD_B_ptrHL => self.ld_r8_ptrr16(r8::B, r16::HL),
+            LD_B_A => self.ld_r8_r8(r8::B, r8::A),
+
+            LD_C_B => self.ld_r8_r8(r8::C, r8::B),
+            LD_C_C => self.ld_r8_r8(r8::C, r8::C),
+            LD_C_D => self.ld_r8_r8(r8::C, r8::D),
+            LD_C_E => self.ld_r8_r8(r8::C, r8::E),
+            LD_C_H => self.ld_r8_r8(r8::C, r8::H),
+            LD_C_L => self.ld_r8_r8(r8::C, r8::L),
+            LD_C_ptrHL => self.ld_r8_ptrr16(r8::C, r16::HL),
+            LD_C_A => self.ld_r8_r8(r8::C, r8::A),
+
+
+            LD_D_B => self.ld_r8_r8(r8::D, r8::B),
+            LD_D_C => self.ld_r8_r8(r8::D, r8::C),
+            LD_D_D => self.ld_r8_r8(r8::D, r8::D),
+            LD_D_E => self.ld_r8_r8(r8::D, r8::E),
+            LD_D_H => self.ld_r8_r8(r8::D, r8::H),
+            LD_D_L => self.ld_r8_r8(r8::D, r8::L),
+            LD_D_ptrHL => self.ld_r8_ptrr16(r8::D, r16::HL),
+            LD_D_A => self.ld_r8_r8(r8::D, r8::A),
+
+            LD_E_B => self.ld_r8_r8(r8::E, r8::B),
+            LD_E_C => self.ld_r8_r8(r8::E, r8::C),
+            LD_E_D => self.ld_r8_r8(r8::E, r8::D),
+            LD_E_E => self.ld_r8_r8(r8::E, r8::E),
+            LD_E_H => self.ld_r8_r8(r8::E, r8::H),
+            LD_E_L => self.ld_r8_r8(r8::E, r8::L),
+            LD_E_ptrHL => self.ld_r8_ptrr16(r8::E, r16::HL),
+            LD_E_A => self.ld_r8_r8(r8::E, r8::A),
+
+            LD_H_B => self.ld_r8_r8(r8::H, r8::B),
+            LD_H_C => self.ld_r8_r8(r8::H, r8::C),
+            LD_H_D => self.ld_r8_r8(r8::H, r8::D),
+            LD_H_E => self.ld_r8_r8(r8::H, r8::E),
+            LD_H_H => self.ld_r8_r8(r8::H, r8::H),
+            LD_H_L => self.ld_r8_r8(r8::H, r8::L),
+            LD_H_ptrHL => self.ld_r8_ptrr16(r8::H, r16::HL),
+            LD_H_A => self.ld_r8_r8(r8::H, r8::A),
+
+            LD_L_B => self.ld_r8_r8(r8::L, r8::B),
+            LD_L_C => self.ld_r8_r8(r8::L, r8::C),
+            LD_L_D => self.ld_r8_r8(r8::L, r8::D),
+            LD_L_E => self.ld_r8_r8(r8::L, r8::E),
+            LD_L_H => self.ld_r8_r8(r8::L, r8::H),
+            LD_L_L => self.ld_r8_r8(r8::L, r8::L),
+            LD_L_ptrHL => self.ld_r8_ptrr16(r8::L, r16::HL),
+            LD_L_A => self.ld_r8_r8(r8::L, r8::A),
+
+
+            LD_ptrHL_B => self.ld_ptrr16_r8(r16::HL, r8::B),
+            LD_ptrHL_C => self.ld_ptrr16_r8(r16::HL, r8::C),
+            LD_ptrHL_D => self.ld_ptrr16_r8(r16::HL, r8::D),
+            LD_ptrHL_E => self.ld_ptrr16_r8(r16::HL, r8::E),
+            LD_ptrHL_H => self.ld_ptrr16_r8(r16::HL, r8::H),
+            LD_ptrHL_L => self.ld_ptrr16_r8(r16::HL, r8::L),
+            HALT => unimplemented!(),
+            LD_ptrHL_A => self.ld_ptrr16_r8(r16::HL, r8::A),
+
+            LD_A_B => self.ld_r8_r8(r8::A, r8::B),
+            LD_A_C => self.ld_r8_r8(r8::A, r8::C),
+            LD_A_D => self.ld_r8_r8(r8::A, r8::D),
+            LD_A_E => self.ld_r8_r8(r8::A, r8::E),
+            LD_A_H => self.ld_r8_r8(r8::A, r8::H),
+            LD_A_L => self.ld_r8_r8(r8::A, r8::L),
+            LD_A_ptrHL => self.ld_r8_ptrr16(r8::A, r16::HL),
+            LD_A_A => self.ld_r8_r8(r8::A, r8::A),
+
+
+            ADD_A_B => self.add_r8_r8(r8::A, r8::B),
+            ADD_A_C => self.add_r8_r8(r8::A, r8::C),
+            ADD_A_D => self.add_r8_r8(r8::A, r8::D),
+            ADD_A_E => self.add_r8_r8(r8::A, r8::E),
+            ADD_A_H => self.add_r8_r8(r8::A, r8::H),
+            ADD_A_L => self.add_r8_r8(r8::A, r8::L),
+            ADD_A_ptrHL => unimplemented!(),
+            ADD_A_A => self.add_r8_r8(r8::A, r8::A),
+
             _ => unimplemented!(),
         }
     }
@@ -146,6 +231,11 @@ impl Cpu {
             .unwrap_or(d16::ZERO);
         self.stack_pointer += 2;
         val
+    }
+
+    fn ld_r8_r8(&mut self, target: r8, src: r8) {
+        self.gp_registers[target] = self.gp_registers[src];
+        self.cycle(4);
     }
 
     fn ld_r16_d16(&mut self, reg: r16) {
@@ -276,7 +366,7 @@ impl Cpu {
         let lhs: d16 = self.gp_registers[target];
         let rhs: d16 = self.gp_registers[source];
 
-        let nibble_overflow = d16::check_nibble_overflow(rhs, lhs);
+        let nibble_overflow = d16::check_nibble_overflow(lhs, rhs);
         let (result, carry_flag) = d16::add_and_check_overflow(lhs, rhs);
         
         self.gp_registers[target] = result;
@@ -293,6 +383,27 @@ impl Cpu {
         self.gp_registers.set_maybe_flags(flags);
 
         self.cycle(8);
+    }
+
+    fn add_r8_r8(&mut self, target: r8, source: r8) {
+        let lhs: d8 = self.gp_registers[target];
+        let rhs: d8 = self.gp_registers[source];
+
+        let nibble_overflow = d8::check_nibble_overflow(lhs, rhs);
+        let (result, carry_flag) = d8::add_and_check_overflow(lhs, rhs);
+
+        self.gp_registers[target] = result;
+
+        let flags: [Option<bool>; 4] = [
+            Some(result == 0),
+            Some(false),
+            Some(nibble_overflow),
+            Some(carry_flag)
+        ];
+
+        self.gp_registers.set_maybe_flags(flags);
+
+        self.cycle(4);
     }
 
     fn ld_r16_r8(&mut self, target: r16, source: r8) {

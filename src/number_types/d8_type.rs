@@ -17,10 +17,17 @@ impl d8 {
         self & LOWER_NIBBLE_MASK
     }
 
-    pub fn check_nibble_overflow(rhs: Self, lhs: Self) -> bool {
+    pub fn check_nibble_overflow(lhs: Self, rhs: Self) -> bool {
         let rhs: Wrapping<u8> = rhs.into();
         let lhs: Wrapping<u8> = lhs.into();
         ((rhs + lhs) > Wrapping( 1 << 3))
+    }
+
+    pub fn add_and_check_overflow(lhs: Self, rhs: Self) -> (Self, bool) {
+        let rhs: Wrapping<u16> = rhs.into();
+        let lhs: Wrapping<u16> = lhs.into();
+        let result = rhs + lhs;
+        (result.into(), (result > Wrapping(::std::u8::MAX as _)))
     }
 
     pub const HIGHEST_BIT_MASK: d8 = d8(Wrapping(0b10000000));
@@ -39,6 +46,12 @@ impl ::std::convert::From<d8> for Wrapping<u16> {
     fn from(this: d8) -> Self {
         let d8(Wrapping(this)) = this;
         Wrapping(this as _)
+    }
+}
+
+impl ::std::convert::From<Wrapping<u16>> for d8 {
+    fn from(Wrapping(this): Wrapping<u16>) -> Self {
+        d8(Wrapping(this as _))
     }
 }
 
