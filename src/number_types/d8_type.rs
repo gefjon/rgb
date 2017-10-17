@@ -18,16 +18,33 @@ impl d8 {
     }
 
     pub fn check_nibble_overflow(lhs: Self, rhs: Self) -> bool {
-        let rhs: Wrapping<u8> = rhs.into();
-        let lhs: Wrapping<u8> = lhs.into();
-        ((rhs + lhs) > Wrapping( 1 << 3))
+        let rhs: Wrapping<u8> = rhs.lower_nibble().into();
+        let lhs: Wrapping<u8> = lhs.lower_nibble().into();
+        ((lhs + rhs) > Wrapping(1 << 3))
     }
 
+    pub fn sub_nibble_overflow(lhs: Self, rhs: Self) -> bool {
+        let rhs = rhs.upper_nibble();
+        let lhs = lhs.upper_nibble();
+        ((lhs - rhs) & LOWER_NIBBLE_MASK) != 0
+    }
+    
     pub fn add_and_check_overflow(lhs: Self, rhs: Self) -> (Self, bool) {
         let rhs: Wrapping<u16> = rhs.into();
         let lhs: Wrapping<u16> = lhs.into();
-        let result = rhs + lhs;
+        let result = lhs + rhs;
         (result.into(), (result > Wrapping(::std::u8::MAX as _)))
+    }
+
+    pub fn sub_and_check_overflow(lhs: Self, rhs: Self) -> (Self, bool) {
+        let rhs: Wrapping<u16> = rhs.into();
+        let rhs = rhs << 1;
+        
+        let lhs: Wrapping<u16> = lhs.into();
+        let lhs = lhs << 1;
+        
+        let result = lhs - rhs;
+        ((result >> 1).into(), (result & Wrapping(1)) != Wrapping(0))
     }
 
     pub const HIGHEST_BIT_MASK: d8 = d8(Wrapping(0b10000000));
@@ -183,6 +200,22 @@ impl ::std::ops::BitAnd for d8 {
 impl ::std::ops::BitAndAssign for d8 {
     fn bitand_assign(&mut self, d8(other): Self) {
         self.0 &= other;
+    }
+}
+
+impl ::std::ops::BitXor for d8 {
+    type Output = Self;
+    fn bitxor(self, d8(rhs): Self) -> <Self as ::std::ops::BitXor>::Output {
+        let d8(me) = self;
+        d8(me ^ rhs)
+    }
+}
+
+impl ::std::ops::BitOr for d8 {
+    type Output = Self;
+    fn bitor(self, d8(rhs): Self) -> <Self as ::std::ops::BitOr>::Output {
+        let d8(me) = self;
+        d8(me | rhs)
     }
 }
 

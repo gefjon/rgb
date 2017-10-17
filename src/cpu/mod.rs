@@ -207,6 +207,73 @@ impl Cpu {
             ADD_A_ptrHL => unimplemented!(),
             ADD_A_A => self.add_r8_r8(r8::A, r8::A),
 
+            ADC_A_B => self.adc_r8_r8(r8::A, r8::B),
+            ADC_A_C => self.adc_r8_r8(r8::A, r8::C),
+            ADC_A_D => self.adc_r8_r8(r8::A, r8::D),
+            ADC_A_E => self.adc_r8_r8(r8::A, r8::E),
+            ADC_A_H => self.adc_r8_r8(r8::A, r8::H),
+            ADC_A_L => self.adc_r8_r8(r8::A, r8::L),
+            ADC_A_ptrHL => unimplemented!(),
+            ADC_A_A => self.adc_r8_r8(r8::A, r8::A),
+
+
+            SUB_B => self.sub_r8(r8::B),
+            SUB_C => self.sub_r8(r8::C),
+            SUB_D => self.sub_r8(r8::D),
+            SUB_E => self.sub_r8(r8::E),
+            SUB_H => self.sub_r8(r8::H),
+            SUB_L => self.sub_r8(r8::L),
+            SUB_ptrHL => unimplemented!(),
+            SUB_A => self.sub_r8(r8::A),
+
+            SBC_B => self.sbc_r8(r8::B),
+            SBC_C => self.sub_r8(r8::C),
+            SBC_D => self.sub_r8(r8::D),
+            SBC_E => self.sub_r8(r8::E),
+            SBC_H => self.sub_r8(r8::H),
+            SBC_L => self.sub_r8(r8::L),
+            SBC_ptrHL => unimplemented!(),
+            SBC_A => self.sub_r8(r8::A),
+
+
+            SUB_B => self.and_r8(r8::B),
+            AND_C => self.and_r8(r8::C),
+            AND_D => self.and_r8(r8::D),
+            AND_E => self.and_r8(r8::E),
+            AND_H => self.and_r8(r8::H),
+            AND_L => self.and_r8(r8::L),
+            AND_ptrHL => unimplemented!(),
+            AND_A => self.and_r8(r8::A),
+
+            XOR_B => self.xor_r8(r8::B),
+            XOR_C => self.xor_r8(r8::C),
+            XOR_D => self.xor_r8(r8::D),
+            XOR_E => self.xor_r8(r8::E),
+            XOR_H => self.xor_r8(r8::H),
+            XOR_L => self.xor_r8(r8::L),
+            XOR_ptrHL => unimplemented!(),
+            XOR_A => self.xor_r8(r8::A),
+
+
+            OR_B => self.or_r8(r8::B),
+            OR_C => self.or_r8(r8::C),
+            OR_D => self.or_r8(r8::D),
+            OR_E => self.or_r8(r8::E),
+            OR_H => self.or_r8(r8::H),
+            OR_L => self.or_r8(r8::L),
+            OR_ptrHL => unimplemented!(),
+            OR_A => self.or_r8(r8::A),
+
+            CP_B => self.cp_r8(r8::B),
+            CP_C => self.cp_r8(r8::C),
+            CP_D => self.cp_r8(r8::D),
+            CP_E => self.cp_r8(r8::E),
+            CP_H => self.cp_r8(r8::H),
+            CP_L => self.cp_r8(r8::L),
+            CP_ptrHL => unimplemented!(),
+            CP_A => self.cp_r8(r8::A),
+
+            
             _ => unimplemented!(),
         }
     }
@@ -397,6 +464,150 @@ impl Cpu {
         let flags: [Option<bool>; 4] = [
             Some(result == 0),
             Some(false),
+            Some(nibble_overflow),
+            Some(carry_flag)
+        ];
+
+        self.gp_registers.set_maybe_flags(flags);
+
+        self.cycle(4);
+    }
+
+    fn adc_r8_r8(&mut self, target: r8, source: r8) {
+        let lhs: d8 = self.gp_registers[target];
+        let rhs: d8 = self.gp_registers[source] +
+            (self.gp_registers.get_flag(Flags::C) as u8);
+
+        let nibble_overflow = d8::check_nibble_overflow(lhs, rhs);
+        let (result, carry_flag) = d8::add_and_check_overflow(lhs, rhs);
+
+        self.gp_registers[target] = result;
+
+        let flags: [Option<bool>; 4] = [
+            Some(result == 0),
+            Some(false),
+            Some(nibble_overflow),
+            Some(carry_flag)
+        ];
+
+        self.gp_registers.set_maybe_flags(flags);
+
+        self.cycle(4);
+    }
+
+    fn sub_r8(&mut self, source: r8) {
+        let lhs: d8 = self.gp_registers[r8::A];
+        let rhs: d8 = self.gp_registers[source];
+
+        let nibble_overflow = d8::sub_nibble_overflow(lhs, rhs);
+        let (result, carry_flag) = d8::sub_and_check_overflow(lhs, rhs);
+
+        self.gp_registers[r8::A] = result;
+
+        let flags: [Option<bool>; 4] = [
+            Some(result == 0),
+            Some(true),
+            Some(nibble_overflow),
+            Some(carry_flag)
+        ];
+
+        self.gp_registers.set_maybe_flags(flags);
+
+        self.cycle(4);
+    }
+
+    fn sbc_r8(&mut self, source: r8) {
+        let lhs: d8 = self.gp_registers[r8::A];
+        let rhs: d8 = self.gp_registers[source] +
+            ((self.gp_registers.get_flag(Flags::C) as u8) << 7);
+
+        let nibble_overflow = d8::sub_nibble_overflow(lhs, rhs);
+        let (result, carry_flag) = d8::sub_and_check_overflow(lhs, rhs);
+
+        self.gp_registers[r8::A] = result;
+
+        let flags: [Option<bool>; 4] = [
+            Some(result == 0),
+            Some(true),
+            Some(nibble_overflow),
+            Some(carry_flag)
+        ];
+
+        self.gp_registers.set_maybe_flags(flags);
+
+        self.cycle(4);
+    }
+
+    fn and_r8(&mut self, source: r8) {
+        let lhs: d8 = self.gp_registers[r8::A];
+        let rhs: d8 = self.gp_registers[source];
+
+        let result = lhs & rhs;
+
+        self.gp_registers[r8::A] = result;
+
+        let flags: [Option<bool>; 4] = [
+            Some(result == 0),
+            Some(false),
+            Some(true),
+            Some(false)
+        ];
+
+        self.gp_registers.set_maybe_flags(flags);
+
+        self.cycle(4);
+    }
+
+    fn xor_r8(&mut self, source: r8) {
+        let lhs: d8 = self.gp_registers[r8::A];
+        let rhs: d8 = self.gp_registers[source];
+
+        let result = lhs ^ rhs;
+
+        self.gp_registers[r8::A] = result;
+
+        let flags: [Option<bool>; 4] = [
+            Some(result == 0),
+            Some(false),
+            Some(false),
+            Some(false)
+        ];
+
+        self.gp_registers.set_maybe_flags(flags);
+
+        self.cycle(4);
+    }
+
+    fn or_r8(&mut self, source: r8) {
+        let lhs: d8 = self.gp_registers[r8::A];
+        let rhs: d8 = self.gp_registers[source];
+
+        let result = lhs | rhs;
+
+        self.gp_registers[r8::A] = result;
+
+        let flags: [Option<bool>; 4] = [
+            Some(result == 0),
+            Some(false),
+            Some(false),
+            Some(false)
+        ];
+
+        self.gp_registers.set_maybe_flags(flags);
+
+        self.cycle(4);
+    }
+
+    fn cp_r8(&mut self, source: r8) {
+        let lhs: d8 = self.gp_registers[r8::A];
+        let rhs: d8 = self.gp_registers[source];
+
+        let nibble_overflow = d8::sub_nibble_overflow(lhs, rhs);
+        let (result, carry_flag) = d8::sub_and_check_overflow(lhs, rhs);
+
+        let flags: [Option<bool>; 4] = [
+            Some(result == 0),
+            Some(true),
             Some(nibble_overflow),
             Some(carry_flag)
         ];
