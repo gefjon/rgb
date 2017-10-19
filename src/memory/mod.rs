@@ -1,5 +1,6 @@
 use number_types::d8_type::d8;
 use number_types::d16_type::d16;
+use number_types::a16_type::a16;
 use std::num::Wrapping;
 
 type CartRomBank0 = [d8; 0x3eb0];
@@ -68,7 +69,7 @@ impl Memory {
         }
     }
     
-    pub fn read_d8(&self, d16(Wrapping(idx)): d16) -> Option<d8> {
+    pub fn read_d8(&self, a16(Wrapping(idx)): a16) -> Option<d8> {
         let idx = idx as usize;
         match idx {
             0x0000 ... 0x00ff => Some(self.restart_and_int_vectors[idx]),
@@ -97,7 +98,7 @@ impl Memory {
         }
     }
 
-    pub fn put_d8(&mut self, d16(Wrapping(idx)): d16, val: d8) -> Option<()> {
+    pub fn put_d8(&mut self, a16(Wrapping(idx)): a16, val: d8) -> Option<()> {
         let idx = idx as usize;
         match idx {
             0x0000 ... 0x00ff => Some(self.restart_and_int_vectors[idx] = val),
@@ -124,14 +125,14 @@ impl Memory {
         }
     }
 
-    pub fn read_d16(&self, idx: d16) -> Option<d16> {
+    pub fn read_d16(&self, idx: a16) -> Option<d16> {
         Some([
             self.read_d8(idx).unwrap_or(d8::ZERO),
             self.read_d8(idx + 1).unwrap_or(d8::ZERO)
         ].into())
     }
 
-    pub fn put_d16(&mut self, idx: d16, val: d16) -> Option<()> {
+    pub fn put_d16(&mut self, idx: a16, val: d16) -> Option<()> {
         let val: [d8; 2] = val.into();
         let (lsb, msb) = (val[0], val[1]);
         let lsb: Option<()> = self.put_d8(idx, lsb);
