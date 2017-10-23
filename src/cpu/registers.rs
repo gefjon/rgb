@@ -74,6 +74,15 @@ impl Registers {
         let d8(Wrapping(val)) = *self.flags_register() & d8(Wrapping(1 << flag as usize));
         val > 0
     }
+
+    pub fn check_condition(&self, cond: Conditions) -> bool {
+        match cond {
+            Conditions::Z => self.get_flag(Flags::Z),
+            Conditions::NZ => !(self.get_flag(Flags::Z)),
+            Conditions::C => self.get_flag(Flags::C),
+            Conditions::NC => !(self.get_flag(Flags::C)),
+        }
+    }
 }
 
 impl Index<r16> for Registers {
@@ -148,6 +157,15 @@ pub enum Flags {
     N = 0x6, // set if the last math instruction was subtraction
     H = 0x5, // set if a carry occurred from the lower nibble in the last math operation
     C = 0x4, // set if a carry occurred from the last math operation or if A is the smaller value when using the CP instruction
+}
+
+#[allow(warnings)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub enum Conditions {
+    Z,
+    NZ,
+    C,
+    NC,
 }
 
 #[cfg(test)]

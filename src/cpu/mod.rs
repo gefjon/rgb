@@ -11,6 +11,7 @@ use self::registers::*;
 use number_types::d8_type::d8;
 use number_types::d16_type::d16;
 use number_types::a16_type::a16;
+use number_types::a8_type::a8;
 use memory::Memory;
 
 #[derive(Debug, Copy, Clone)]
@@ -86,7 +87,7 @@ impl Cpu {
             RRA => self.rotate_right(r8::A),
 
 
-            JR_NZ_d8 => self.jr_NZ_d8(),
+            JR_NZ_d8 => self.jr_cond_d8(Conditions::NZ),
             LD_HL_d16 => self.ld_r16_d16(r16::HL),
             LD_ptrHL_A => self.ld_ptrr16_r8(r16::HL, r8::A),
             INC_HL => self.inc_r16(r16::HL),
@@ -95,7 +96,7 @@ impl Cpu {
             LD_H_d8 => self.ld_r8_d8(r8::H),
             DAA => unimplemented!(),
 
-            JR_Z_d8 => self.jr_Z_d8(),
+            JR_Z_d8 => self.jr_cond_d8(Conditions::Z),
             ADD_HL_HL => self.add_r16_r16(r16::HL, r16::HL),
             LD_A_ptrHL => self.ld_r8_ptrr16(r8::A, r16::HL),
             DEC_HL => self.dec_r16(r16::HL),
@@ -104,7 +105,7 @@ impl Cpu {
             CPL => self.compliment_r8(r8::A),
 
 
-            JR_NC_d8 => self.jr_NC_d8(),
+            JR_NC_d8 => self.jr_cond_d8(Conditions::NC),
             LD_SP_d16 => self.ld_sp_d16(),
             LD_HLm_A => unimplemented!(),
             INC_SP => self.inc_sp(),
@@ -113,7 +114,7 @@ impl Cpu {
             LD_ptrHL_d8 => unimplemented!(),
             SCF => self.set_carry(true),
 
-            JR_C_d8 => self.jr_C_d8(),
+            JR_C_d8 => self.jr_cond_d8(Conditions::C),
             ADD_HL_SP => self.add_sp_into(r16::HL),
             LD_A_HLm => unimplemented!(),
             DEC_SP => self.dec_sp(),
@@ -274,6 +275,58 @@ impl Cpu {
             CP_ptrHL => unimplemented!(),
             CP_A => self.cp_r8(r8::A),
 
+
+            RET_NZ => self.return_if(Conditions::NZ),
+            POP_BC => self.pop_r16(r16::BC),
+            JP_NZ => unimplemented!(),
+            JP => unimplemented!(),
+            CALL_NZ => self.call_if(Conditions::NZ),
+            PUSH_BC => self.push_r16(r16::BC),
+            ADD_A_d8 => unimplemented!(),
+            RST_00H => unimplemented!(),
+
+            RET_Z => self.return_if(Conditions::Z),
+            RET => self.ret(),
+            JP_Z => unimplemented!(),
+            PREFIX_CB => unimplemented!(),
+            CALL_Z => self.call_if(Conditions::Z),
+            CALL => self.call(),
+            ADC_A_d8 => unimplemented!(),
+            RST_08H => unimplemented!(),
+
+
+            RET_NC => self.return_if(Conditions::NC),
+            POP_DE => self.pop_r16(r16::DE),
+            JP_NC => unimplemented!(),
+            BAD_0 => panic!("Bad instruction!"),
+            CALL_NC => self.call_if(Conditions::NC),
+            PUSH_DE => self.push_r16(r16::DE),
+            SUB_A_d8 => unimplemented!(),
+            RST_10H => unimplemented!(),
+
+            RET_C => self.return_if(Conditions::C),
+            RETI => unimplemented!(),
+            JP_C => unimplemented!(),
+            BAD_1 => panic!("Bad instruction!"),
+            CALL_C => self.call_if(Conditions::C),
+            BAD_2 => panic!("Bad instruction!"),
+            SBC_A_d8 => unimplemented!(),
+            RST_18H => unimplemented!(),
+
+
+            LDH_a8_A => self.ldh_a8_r8(r8::A),
+            POP_HL => self.pop_r16(r16::HL),
+            LDH_C_A => unimplemented!(),
+            BAD_3 => panic!("Bad instruction!"),
+            BAD_4 => panic!("Bad instruction!"),
+            PUSH_HL => self.push_r16(r16::HL),
+            AND_d8 => unimplemented!(),
+            RST_20H => unimplemented!(),
+            
+
+
+            
+            LDH_A_a8 => self.ldh_r8_a8(r8::A),
             
             _ => unimplemented!(),
         }
@@ -301,6 +354,85 @@ impl Cpu {
         val
     }
 
+    fn d16_from_stack(&mut self) -> d16 {
+        // the GB stack lives at a very positive address
+        // and grows towards 0
+        let ret_val = self.memory.read_d16(self.stack_pointer.into()).unwrap();
+        self.stack_pointer += 2;
+        ret_val
+    }
+
+    fn d16_to_stack(&mut self, val: d16) {
+        // the GB stack lives at a very positive address
+        // and grows towards 0
+        let _ = self.memory.put_d16(self.stack_pointer.into(), val);
+        self.stack_pointer -= 2;
+    }
+
+    fn d8_from_stack(&mut self) -> d16 {
+        let ret_val = self.memory.read_d16(self.stack_pointer.into()).unwrap();
+        self.stack_pointer += 1;
+        ret_val
+    }
+
+    fn d8_to_stack(&mut self, val: d8) {
+        let _ = self.memory.put_d8(self.stack_pointer.into(), val);
+        self.stack_pointer -= 1;
+    }
+
+    fn pop_r16(&mut self, target: r16) {
+        self.gp_registers[target] = self.d16_from_stack();
+        self.cycle(12);
+    }
+
+    fn push_r16(&mut self, source: r16) {
+        // why do the push/pop ops not take the same amount of time?
+        let val = self.gp_registers[source];
+        self.d16_to_stack(val);
+        self.cycle(16);
+    }
+
+    fn call_addr(&mut self, addr: a16) {
+        let sp = self.stack_pointer;
+        self.d16_to_stack(sp);
+        self.stack_pointer = addr.into();
+    }
+
+    fn call(&mut self) {
+        let address: a16 = self.read_next_d16().into();
+        self.call_addr(address);
+        self.cycle(24);
+    }
+
+    fn call_if(&mut self, cond: Conditions) {
+        let address: a16 = self.read_next_d16().into();
+        if self.gp_registers.check_condition(cond) {
+            self.call_addr(address);
+            self.cycle(24);
+        } else {
+            self.cycle(12);
+        }
+    }
+
+    fn ret(&mut self) {
+        let address = self.d16_from_stack();
+        self.stack_pointer = address;
+        self.cycle(16);
+    }
+
+    fn return_if(&mut self, cond: Conditions) {
+        if self.gp_registers.check_condition(cond) {
+            self.ret();
+            self.cycle(4);
+            // RET cycles 16, and these methods take 20 cycles
+            // when they return, or 8 otherwise
+            // because I wanted to use the same method to return,
+            // cycle the extra 4 here
+        } else {
+            self.cycle(8);
+        }
+    }
+
     fn jr_d8(&mut self) {
         let ptr = self.read_next_d8();
         self.stack_pointer -= 2;
@@ -308,33 +440,9 @@ impl Cpu {
         self.cycle(4);
     }
 
-    fn jr_NZ_d8(&mut self) {
+    fn jr_cond_d8(&mut self, cond: Conditions) {
         let ptr = self.read_next_d8();
-        if !(self.gp_registers.get_flag(Flags::Z)) {
-            self.jump_relative(ptr);
-        }
-        self.cycle(8);
-    }
-
-    fn jr_Z_d8(&mut self) {
-        let ptr = self.read_next_d8();
-        if self.gp_registers.get_flag(Flags::Z) {
-            self.jump_relative(ptr);
-        }
-        self.cycle(8);
-    }
-
-    fn jr_NC_d8(&mut self) {
-        let ptr = self.read_next_d8();
-        if !(self.gp_registers.get_flag(Flags::C)) {
-            self.jump_relative(ptr);
-        }
-        self.cycle(8);
-    }
-
-    fn jr_C_d8(&mut self) {
-        let ptr = self.read_next_d8();
-        if self.gp_registers.get_flag(Flags::C) {
+        if self.gp_registers.check_condition(cond) {
             self.jump_relative(ptr);
         }
         self.cycle(8);
@@ -345,6 +453,20 @@ impl Cpu {
         sp += ptr;
         self.stack_pointer = sp.into();
         self.cycle(4);
+    }
+
+    fn ldh_a8_r8(&mut self, source: r8) {
+        let adr: a8 = self.read_next_d8().into();
+        let val = self.gp_registers[source];
+        let _ = self.memory.put_d8(adr.into(), val);
+        self.cycle(12);
+    }
+    
+    fn ldh_r8_a8(&mut self, target: r8) {
+        let adr: a8 = self.read_next_d8().into();
+        let val: d8 = self.memory.read_d8(adr.into()).unwrap_or(d8::ZERO);
+        self.gp_registers[target] = val;
+        self.cycle(12);
     }
 
     fn ld_r8_r8(&mut self, target: r8, src: r8) {

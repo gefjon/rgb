@@ -237,11 +237,11 @@ pub enum RawOpcode {
     JP_C = 0xda, //                 3 16/12  | - - - - | Absolute jump to the next two bytes if the C flag is set
     BAD_1 = 0xdb,
     CALL_C = 0xdc, //               3 24/12  | - - - - | Call the next two bytes if the C flag is set
-    BAD02 = 0xdd,
+    BAD_2 = 0xdd,
     SBC_A_d8 = 0xde, //             2     8  | Z 1 H C | A -= d8 + Cflag
     RST_18H = 0xdf, //              1    16  | - - - - | Call restart vector 18H
 
-    LDH_d8_A = 0xe0, //             2    12  | - - - - | Write the value in A to memory at (FF00 + d8)
+    LDH_a8_A = 0xe0, //             2    12  | - - - - | Write the value in A to memory at (FF00 + d8)
     POP_HL = 0xe1, //               1    12  | - - - - | Pop from stack into HL
     LDH_C_A = 0xe2, //              1     8  | - - - - | Write the value in A to memory at (FF00 + C)
     BAD_3 = 0xe3,
@@ -258,7 +258,7 @@ pub enum RawOpcode {
     XOR_d8 = 0xee, //               2     8  | Z 0 1 0 | A xor= d8
     RST_28H = 0xef, //              1    16  | - - - - | Call restart vector 28H
 
-    LDH_A_d8 = 0xf0, //             2    12  | - - - - | Load the value in memory at (FF00 + d8) into A
+    LDH_A_a8 = 0xf0, //             2    12  | - - - - | Load the value in memory at (FF00 + d8) into A
     POP_AF = 0xf1, //               1    12  | - - - - | Pop from stack into AF
     LDH_A_C = 0xf2, //              1     8  | - - - - | Load the value in memory at (FF00 + C) into A
     DI = 0xf3, //                   1     4  | - - - - | Disable interrupts
