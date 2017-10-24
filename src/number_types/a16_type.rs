@@ -6,6 +6,25 @@ use number_types::d16_type::d16;
 #[derive(Copy, Clone, Debug)]
 pub struct a16(pub Wrapping<u16>);
 
+impl a16 {
+    pub fn add_and_check_carry(a16(Wrapping(lhs)): Self, d8(Wrapping(rhs)): d8) -> (Self, bool, bool) {
+        // This returns (result, carry_flag, nibble_carry)
+        let rhs: i8 = rhs as _;
+        let rhs: i32 = rhs as _;
+        let lhs: i32 = (lhs as u32) as i32;
+
+        let nibble_carry = (lhs & 0xff) + (rhs & 0xff) >= 1 << 4;
+        
+        let result = lhs + rhs;
+        (
+            a16(Wrapping(result as _)),
+            (result & 0xffff0000) != 0,
+            nibble_carry
+        )
+    }
+}
+    
+
 impl ::std::convert::From<d16> for a16 {
     fn from(this: d16) -> Self {
         a16(this.0)

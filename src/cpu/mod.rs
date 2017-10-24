@@ -21,6 +21,12 @@ pub enum CpuMode {
     CGB,
 }
 
+macro_rules! bad_inst {
+    () => (
+        panic!("Bad instruction!")
+    )
+}
+
 pub struct Cpu {
     gp_registers: Registers,
     stack_pointer: d16,
@@ -89,7 +95,7 @@ impl Cpu {
 
             JR_NZ_d8 => self.jr_cond_d8(Conditions::NZ),
             LD_HL_d16 => self.ld_r16_d16(r16::HL),
-            LD_ptrHL_A => self.ld_ptrr16_r8(r16::HL, r8::A),
+            LD_ptrHLp_A => unimplemented!(),
             INC_HL => self.inc_r16(r16::HL),
             INC_H => self.inc_r8(r8::H),
             DEC_H => self.dec_r8(r8::H),
@@ -98,10 +104,11 @@ impl Cpu {
 
             JR_Z_d8 => self.jr_cond_d8(Conditions::Z),
             ADD_HL_HL => self.add_r16_r16(r16::HL, r16::HL),
-            LD_A_ptrHL => self.ld_r8_ptrr16(r8::A, r16::HL),
+            LD_A_ptrHLm => unimplemented!(),
             DEC_HL => self.dec_r16(r16::HL),
             INC_L => self.inc_r8(r8::L),
             DEC_L => self.dec_r8(r8::L),
+            LD_L_d8 => self.ld_r8_d8(r8::L),
             CPL => self.compliment_r8(r8::A),
 
 
@@ -238,7 +245,7 @@ impl Cpu {
             SBC_A => self.sub_r8(r8::A),
 
 
-            SUB_B => self.and_r8(r8::B),
+            AND_B => self.and_r8(r8::B),
             AND_C => self.and_r8(r8::C),
             AND_D => self.and_r8(r8::D),
             AND_E => self.and_r8(r8::E),
@@ -316,19 +323,40 @@ impl Cpu {
 
             LDH_a8_A => self.ldh_a8_r8(r8::A),
             POP_HL => self.pop_r16(r16::HL),
-            LDH_C_A => unimplemented!(),
+            LDH_C_A => self.ldh_c_r8(r8::A),
             BAD_3 => panic!("Bad instruction!"),
             BAD_4 => panic!("Bad instruction!"),
             PUSH_HL => self.push_r16(r16::HL),
             AND_d8 => unimplemented!(),
             RST_20H => unimplemented!(),
             
-
+            ADD_SP_d8 => self.add_sp_d8(),
+            JP_ptrHL => unimplemented!(),
+            LD_a16_A => self.ld_a16_r8(r8::A),
+            BAD_5 => bad_inst!(),
+            BAD_6 => bad_inst!(),
+            BAD_7 => bad_inst!(),
+            XOR_d8 => unimplemented!(),
+            RST_28H => unimplemented!(),
 
             
             LDH_A_a8 => self.ldh_r8_a8(r8::A),
-            
-            _ => unimplemented!(),
+            POP_AF => self.pop_r16(r16::AF),
+            LDH_A_C => self.ldh_r8_c(r8::A),
+            DI => unimplemented!(),
+            BAD_8 => bad_inst!(),
+            PUSH_AF => self.push_r16(r16::AF),
+            OR_d8 => unimplemented!(),
+            RST_30H => unimplemented!(),
+
+            LD_HL_SPpd8 => unimplemented!(),
+            LD_SP_HL => self.ld_sp_hl(),
+            LD_A_a16 => unimplemented!(),
+            EI => unimplemented!(),
+            BAD_9 => bad_inst!(),
+            BAD_a => bad_inst!(),
+            CP_d8 => unimplemented!(),
+            RST_38H => unimplemented!(),
         }
     }
 
@@ -433,6 +461,21 @@ impl Cpu {
         }
     }
 
+    fn add_sp_d8(&mut self) {
+        let rhs: d8 = self.read_next_d8();
+        let lhs: a16 = self.stack_pointer.into();
+        let (result, carry_flag, nibble_carry) = a16::add_and_check_carry(lhs, rhs);
+
+        let flags: [Option<bool>; 4] = [
+            Some(false),
+            Some(false),
+            Some(nibble_carry),
+            Some(carry_flag)
+        ];
+        self.stack_pointer = result.into();
+        self.cycle(16);
+    }
+
     fn jr_d8(&mut self) {
         let ptr = self.read_next_d8();
         self.stack_pointer -= 2;
@@ -469,6 +512,20 @@ impl Cpu {
         self.cycle(12);
     }
 
+    fn ldh_c_r8(&mut self, source: r8) {
+        let adr: a8 = a8(Wrapping(self.gp_registers.get_flag(Flags::C) as u8));
+        let val = self.gp_registers[source];
+        let _ = self.memory.put_d8(adr.into(), val);
+        self.cycle(8);
+    }
+
+    fn ldh_r8_c(&mut self, target: r8) {
+        let adr: a8 = a8(Wrapping(self.gp_registers.get_flag(Flags::C) as u8));
+        let val = self.memory.read_d8(adr.into()).unwrap_or(d8::ZERO);
+        self.gp_registers[target] = val;
+        self.cycle(8);
+    }
+
     fn ld_r8_r8(&mut self, target: r8, src: r8) {
         self.gp_registers[target] = self.gp_registers[src];
         self.cycle(4);
@@ -484,6 +541,11 @@ impl Cpu {
         self.cycle(12);
     }
 
+    fn ld_sp_hl(&mut self) {
+        self.stack_pointer = self.gp_registers[r16::HL];
+        self.cycle(4);
+    }
+
     fn ld_r8_d8(&mut self, reg: r8) {
         self.gp_registers[reg] = self.read_next_d8();
         self.cycle(8);
@@ -494,6 +556,13 @@ impl Cpu {
         let sp = self.stack_pointer;
         self.memory.put_d16(ptr.into(), sp);
         self.cycle(20);
+    }
+
+    fn ld_a16_r8(&mut self, reg: r8) {
+        let ptr = self.read_next_d16();
+        let val = self.gp_registers[reg];
+        self.memory.put_d8(ptr.into(), val);
+        self.cycle(16);
     }
 
     fn ld_r8_ptrr16(&mut self, target: r8, source: r16) {

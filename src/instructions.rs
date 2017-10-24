@@ -251,7 +251,7 @@ pub enum RawOpcode {
     RST_20H = 0xe7, //              1    16  | - - - - | Call restart vector 20H
     ADD_SP_d8 = 0xe8, //            2    16  | 0 0 H C | Add the signed value d8 to SP
     JP_ptrHL = 0xe9, //             1     4  | - - - - | Absolute jump to the location pointed to by HL
-    LD_d16_A = 0xea, //             3    16  | - - - - | Load the value in A into the location pointed to by the next two bytes
+    LD_a16_A = 0xea, //             3    16  | - - - - | Load the value in A into the location pointed to by the next two bytes
     BAD_5 = 0xeb,
     BAD_6 = 0xec,
     BAD_7 = 0xed,
@@ -268,7 +268,7 @@ pub enum RawOpcode {
     RST_30H = 0xf7, //              1    16  | - - - - | Call restart vector 30H
     LD_HL_SPpd8 = 0xf8, //          2    16  | 0 0 H C | Add the signed value d8 to SP and store the result in HL
     LD_SP_HL = 0xf9, //             1     4  | - - - - | Load HL into SP
-    LD_A_d16 = 0xfa, //             3    16  | - - - - | Load the value pointed to by the next two bytes into A
+    LD_A_a16 = 0xfa, //             3    16  | - - - - | Load the value pointed to by the next two bytes into A
     EI = 0xfb, //                   1     4  | - - - - | Enable interrupts
     BAD_9 = 0xfc,
     BAD_a = 0xfd,
