@@ -29,6 +29,12 @@ use self::stack::Stack;
 mod function_calls;
 use self::function_calls::FunCall;
 
+mod jump_relative;
+use self::jump_relative::JumpRelative;
+
+mod jump;
+use self::jump::Jump;
+
 use number_types::d8_type::d8;
 use number_types::d16_type::d16;
 use number_types::a16_type::a16;
@@ -137,8 +143,8 @@ impl Cpu {
             LD_SP_d16 => self.ld_sp_d16(),
             LD_HLm_A => unimplemented!(),
             INC_SP => self.inc_sp(),
-            INC_ptrHL => unimplemented!(),
-            DEC_ptrHL => unimplemented!(),
+            INC_ptrHL => self.inc_ptrr16(r16::HL),
+            DEC_ptrHL => self.dec_ptrr16(r16::HL),
             LD_ptrHL_d8 => unimplemented!(),
             SCF => self.set_carry(true),
 
@@ -306,8 +312,8 @@ impl Cpu {
 
             RET_NZ => self.return_if(Conditions::NZ),
             POP_BC => self.pop_r16(r16::BC),
-            JP_NZ => unimplemented!(),
-            JP => unimplemented!(),
+            JP_NZ => self.jp_cond_a16(Conditions::NZ),
+            JP => self.jp_a16(),
             CALL_NZ => self.call_if(Conditions::NZ),
             PUSH_BC => self.push_r16(r16::BC),
             ADD_A_d8 => unimplemented!(),
@@ -315,7 +321,7 @@ impl Cpu {
 
             RET_Z => self.return_if(Conditions::Z),
             RET => self.ret(),
-            JP_Z => unimplemented!(),
+            JP_Z => self.jp_cond_a16(Conditions::Z),
             PREFIX_CB => unimplemented!(),
             CALL_Z => self.call_if(Conditions::Z),
             CALL => self.call(),
@@ -325,7 +331,7 @@ impl Cpu {
 
             RET_NC => self.return_if(Conditions::NC),
             POP_DE => self.pop_r16(r16::DE),
-            JP_NC => unimplemented!(),
+            JP_NC => self.jp_cond_a16(Conditions::NC),
             BAD_0 => panic!("Bad instruction!"),
             CALL_NC => self.call_if(Conditions::NC),
             PUSH_DE => self.push_r16(r16::DE),
@@ -334,7 +340,7 @@ impl Cpu {
 
             RET_C => self.return_if(Conditions::C),
             RETI => unimplemented!(),
-            JP_C => unimplemented!(),
+            JP_C => self.jp_cond_a16(Conditions::C),
             BAD_1 => panic!("Bad instruction!"),
             CALL_C => self.call_if(Conditions::C),
             BAD_2 => panic!("Bad instruction!"),
@@ -402,29 +408,27 @@ impl Cpu {
         self.stack_pointer += 2;
         val
     }
+
+    fn read_d16_from_ptrr16(&self, reg: r16) -> d16 {
+        let val = self.memory.read_d16(self.gp_registers[reg].into())
+            .unwrap_or(d16::ZERO);
+        val
+    }
+
+    fn write_d16_to_ptrr16(&mut self, reg: r16, val: d16) {
+        self.memory.put_d16(self.gp_registers[reg].into(), val);
+    }
+
+    fn read_d8_from_ptrr16(&self, reg: r16) -> d8 {
+        let val = self.memory.read_d8(self.gp_registers[reg].into())
+            .unwrap_or(d8::ZERO);
+        val
+    }
+
+    fn write_d8_to_ptrr16(&mut self, reg: r16, val: d8) {
+        self.memory.put_d8(self.gp_registers[reg].into(), val);
+    }
     
-    fn jr_d8(&mut self) {
-        let ptr = self.read_next_d8();
-        self.stack_pointer -= 2;
-        self.jump_relative(ptr);
-        self.cycle(4);
-    }
-
-    fn jr_cond_d8(&mut self, cond: Conditions) {
-        let ptr = self.read_next_d8();
-        if self.gp_registers.check_condition(cond) {
-            self.jump_relative(ptr);
-        }
-        self.cycle(8);
-    }
-
-    fn jump_relative(&mut self, ptr: d8) {
-        let mut sp: a16 = self.stack_pointer.into();
-        sp += ptr;
-        self.stack_pointer = sp.into();
-        self.cycle(4);
-    }
-
     fn set_carry(&mut self, value: bool) {
         self.gp_registers.set_flag(Flags::C, value);
         self.cycle(4);

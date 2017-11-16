@@ -200,6 +200,13 @@ impl ::std::ops::SubAssign for d16 {
     }
 }
 
+impl ::std::ops::Sub<u16> for d16 {
+    type Output = Self;
+    fn sub(self, other: u16) -> <Self as ::std::ops::Sub<u16>>::Output {
+        d16(self.0 - Wrapping(other))
+    }
+}
+
 impl ::std::ops::SubAssign<u16> for d16 {
     fn sub_assign(&mut self, other: u16) {
         self.0 = self.0 - Wrapping(other);

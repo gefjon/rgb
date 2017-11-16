@@ -14,6 +14,8 @@ pub trait Increment {
     fn dec_r16(&mut self, reg: Self::Register_16);
     fn inc_r8(&mut self, reg: Self::Register_8);
     fn dec_r8(&mut self, reg: Self::Register_8);
+    fn inc_ptrr16(&mut self, reg: Self::Register_16);
+    fn dec_ptrr16(&mut self, reg: Self::Register_16);
 }
 
 impl Increment for Cpu {
@@ -72,5 +74,13 @@ impl Increment for Cpu {
         self.gp_registers.set_maybe_flags(flags);
 
         self.cycle(4);
+    }
+    fn inc_ptrr16(&mut self, reg: r16) {
+        let val = self.read_d16_from_ptrr16(reg);
+        self.write_d16_to_ptrr16(reg, val + 1);
+    }
+    fn dec_ptrr16(&mut self, reg: r16) {
+        let val = self.read_d16_from_ptrr16(reg);
+        self.write_d16_to_ptrr16(reg, val - 1);
     }
 }
